@@ -1129,6 +1129,28 @@ function getOptions(field, list) {
   return [...new Set(list.map(c => c[field]).filter(Boolean))].sort();
 }
 
+// Apply all active filters EXCEPT the one for `excludeField`.
+// Used to compute cascading dropdown options.
+function applyFiltersExcept(excludeField) {
+  const { filters, search } = state;
+  const fieldMap = { organizer:'gov', confederation:'confederation', region:'region', country:'country', category:'category', format:'format', tier:'tier' };
+  return COMPETITIONS.filter(c => {
+    if (search) {
+      const q = search.toLowerCase();
+      if (!c.name.toLowerCase().includes(q) && !c.organizer.toLowerCase().includes(q) && !(c.country||'').toLowerCase().includes(q)) return false;
+    }
+    for (const [filterKey, compKey] of Object.entries(fieldMap)) {
+      if (filterKey === excludeField) continue;
+      if (filters[filterKey] && c[compKey] !== filters[filterKey]) return false;
+    }
+    if (filters.standings && !c.standings) return false;
+    if (filters.bracket && !c.bracket) return false;
+    if (filters.groups && !c.groups) return false;
+    if (filters.playoffs && !c.playoffs) return false;
+    return true;
+  });
+}
+
 /* ═══════════════════════════════════════════════════════════
    RENDER HELPERS
 ═══════════════════════════════════════════════════════════ */
@@ -1174,10 +1196,10 @@ function renderSidebar(filtered) {
       <div style="font-size:11px;color:var(--text-3)">${filtered.length} of ${all.length} competitions</div>
     </div>
     <hr class="f-divider">
-    ${sel('organizer','Governing Body', getOptions('gov', all))}
-    ${sel('confederation','Confederation', getOptions('confederation', all))}
-    ${sel('region','Region', getOptions('region', all))}
-    ${sel('country','Country', getOptions('country', all).filter(Boolean))}
+    ${sel('organizer','Governing Body', getOptions('gov', applyFiltersExcept('organizer')))}
+    ${sel('confederation','Confederation', getOptions('confederation', applyFiltersExcept('confederation')))}
+    ${sel('region','Region', getOptions('region', applyFiltersExcept('region')))}
+    ${sel('country','Country', getOptions('country', applyFiltersExcept('country')).filter(Boolean))}
     ${sel('category','Category', Object.keys(CAT_LABELS))}
     ${sel('format','Format', Object.keys(FORMAT_LABELS))}
     ${sel('tier','Audience Tier', Object.keys(TIER_LABELS))}
