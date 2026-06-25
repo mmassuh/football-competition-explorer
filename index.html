@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Football Competition Explorer — Internal Reference</title>
+<style>
+:root {
+  --bg: #0d0f1a; --surface: #141727; --surface-2: #1c2038; --surface-3: #242848;
+  --border: #272c47; --border-hi: #343a5e;
+  --text: #e2e6f8; --text-2: #8891b5; --text-3: #505878;
+  --accent: #5468ff; --accent-2: #6b7fff; --accent-dim: #1b2060;
+  --green: #22c55e; --green-dim: #0f2e1a;
+  --yellow: #f59e0b; --yellow-dim: #2e1e00;
+  --red: #ef4444; --red-dim: #2e0808;
+  --purple: #a855f7; --purple-dim: #25104a;
+  --cyan: #06b6d4; --cyan-dim: #062830;
+  --orange: #f97316; --orange-dim: #2e1200;
+  --r: 6px; --r-lg: 10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:13px;line-height:1.5}
+button{cursor:pointer;font-family:inherit;font-size:13px}
+select,input{font-family:inherit;font-size:12px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:3px}
+
+/* ── LAYOUT ── */
+#app{display:flex;flex-direction:column;height:100vh}
+.hdr{display:flex;align-items:center;gap:14px;padding:0 18px;height:50px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;z-index:100}
+.hdr-logo{display:flex;align-items:center;gap:9px}
+.hdr-icon{width:28px;height:28px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.hdr-title{font-weight:700;font-size:14px}
+.hdr-sub{font-size:10px;color:var(--text-3);margin-top:1px}
+.hdr-nav{display:flex;gap:3px;margin-left:auto}
+.nav-btn{padding:5px 13px;border-radius:var(--r);border:none;background:none;color:var(--text-2);font-weight:500;transition:all .15s}
+.nav-btn:hover{color:var(--text);background:var(--surface-2)}
+.nav-btn.on{color:var(--accent-2);background:var(--accent-dim)}
+
+.body{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:228px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:10px}
+.f-section{margin-bottom:14px}
+.f-label{display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);padding:4px 3px 6px}
+.f-select{width:100%;padding:6px 28px 6px 9px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23505878'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center}
+.f-select:focus{outline:none;border-color:var(--accent)}
+.f-checks{display:flex;flex-direction:column;gap:5px}
+.f-check{display:flex;align-items:center;gap:7px}
+.f-check input{accent-color:var(--accent);width:13px;height:13px;flex-shrink:0}
+.f-check label{color:var(--text-2);cursor:pointer}
+.f-reset{width:100%;padding:6px;background:none;border:1px solid var(--border);border-radius:var(--r);color:var(--text-3);margin-top:6px;transition:all .15s}
+.f-reset:hover{border-color:var(--border-hi);color:var(--text-2)}
+.f-divider{border:none;border-top:1px solid var(--border);margin:4px 0 10px}
+
+/* ── MAIN ── */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.toolbar{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.view-toggle{display:flex;gap:1px;background:var(--surface-2);border-radius:var(--r);padding:2px}
+.v-btn{padding:4px 11px;border-radius:4px;border:none;background:none;color:var(--text-3);font-size:11px;transition:all .15s}
+.v-btn.on{background:var(--surface-3);color:var(--text)}
+.search{flex:1;max-width:260px;padding:5px 11px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);color:var(--text)}
+.search:focus{outline:none;border-color:var(--accent)}
+.search::placeholder{color:var(--text-3)}
+.toolbar-count{margin-left:auto;font-size:11px;color:var(--text-3)}
+
+.content{flex:1;overflow-y:auto}
+
+/* ── TABLE ── */
+.comp-table{width:100%;border-collapse:collapse}
+.comp-table th{text-align:left;padding:8px 11px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;white-space:nowrap;cursor:pointer;user-select:none}
+.comp-table th:hover{color:var(--text-2)}
+.comp-table td{padding:8px 11px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap}
+.comp-table tr{cursor:pointer;transition:background .1s}
+.comp-table tr:hover td{background:var(--surface-2)}
+.comp-table tr.sel td{background:var(--accent-dim)}
+.name-cell{display:flex;align-items:center;gap:9px}
+.row-emoji{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.row-name{font-weight:500;color:var(--text)}
+.row-sub{font-size:10px;color:var(--text-3)}
+.bool-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.bool-y{background:var(--green)}
+.bool-n{background:var(--border-hi)}
+
+/* ── CARDS ── */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:11px;padding:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;cursor:pointer;transition:all .15s}
+.card:hover{border-color:var(--border-hi);transform:translateY(-1px);background:var(--surface-2)}
+.card.sel{border-color:var(--accent)}
+.card-top{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.card-ico{width:36px;height:36px;background:var(--surface-3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.card-name{font-weight:600;font-size:13px;line-height:1.3}
+.card-org{font-size:10px;color:var(--text-3);margin-top:2px}
+.card-badges{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px}
+.card-meta{display:flex;flex-wrap:wrap;gap:10px}
+.card-mi{font-size:10px;color:var(--text-3)}
+.card-mi b{color:var(--text-2)}
+.card-mods{display:flex;flex-wrap:wrap;gap:3px;margin-top:8px}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:600;white-space:nowrap}
+/* format */
+.bf-league{background:#0d2a4a;color:#60a5fa}
+.bf-split_league{background:#1e1040;color:#c084fc}
+.bf-league_playoff{background:#0a2d1e;color:#4ade80}
+.bf-group_knockout{background:#2a1500;color:#fb923c}
+.bf-league_phase_knockout{background:#0a1f3a;color:#38bdf8}
+.bf-single_elimination{background:#2a0a0a;color:#f87171}
+.bf-two_leg_knockout{background:#1c0a30;color:#e879f9}
+.bf-nations_league{background:#081f14;color:#34d399}
+.bf-championship_split{background:#2a1500;color:#fdba74}
+.bf-single_match{background:#141414;color:#9ca3af}
+/* tier */
+.bt-global_premium{background:#2a1c00;color:#fcd34d}
+.bt-continental_premier{background:#0a1830;color:#60a5fa}
+.bt-major_national{background:#1a0a30;color:#c084fc}
+.bt-national{background:#0a1f14;color:#6ee7b7}
+.bt-sub_national{background:#151515;color:#6b7280}
+/* category */
+.bc{background:var(--surface-3);color:var(--text-2);border:1px solid var(--border)}
+/* module */
+.bm{background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);padding:2px 6px;border-radius:4px;font-size:10px}
+
+/* ── DETAIL PANEL ── */
+.detail{width:420px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);overflow-y:auto;transition:width .2s,opacity .2s}
+.detail.hidden{width:0;overflow:hidden;opacity:0}
+.d-hdr{padding:14px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;display:flex;gap:10px;align-items:flex-start}
+.d-ico{width:44px;height:44px;background:var(--surface-2);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.d-title{font-weight:700;font-size:15px;line-height:1.3}
+.d-org{font-size:11px;color:var(--text-3);margin-top:3px}
+.d-close{margin-left:auto;background:none;border:none;color:var(--text-3);font-size:17px;padding:3px;line-height:1;flex-shrink:0}
+.d-close:hover{color:var(--text)}
+.d-body{padding:14px 18px}
+.d-sec{margin-bottom:18px}
+.d-sec-title{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.d-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.d-item{}
+.d-il{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em}
+.d-iv{font-size:12px;color:var(--text);font-weight:500;margin-top:2px}
+.d-desc{font-size:12px;color:var(--text-2);line-height:1.65}
+.d-mods{display:flex;flex-wrap:wrap;gap:5px}
+.d-mod{display:flex;align-items:center;gap:5px;padding:5px 9px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);font-size:11px}
+.d-mod-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.d-mod-name{font-weight:500;color:var(--text)}
+.d-list{display:flex;flex-direction:column;gap:5px}
+.d-li{padding:7px 10px;background:var(--surface-2);border-radius:var(--r);font-size:11px;color:var(--text-2);line-height:1.55;border-left:2px solid var(--border-hi)}
+.d-li.ux{border-left-color:var(--accent)}
+.d-li.edge{border-left-color:var(--yellow)}
+.d-badges{display:flex;flex-wrap:wrap;gap:4px}
+
+/* ── FORMATS TAB ── */
+.fmt-wrap{flex:1;overflow-y:auto;padding:20px}
+.fmt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:16px}
+.fmt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.fmt-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px}
+.fmt-hdr-icon{font-size:22px}
+.fmt-hdr-title{font-weight:700;font-size:14px}
+.fmt-hdr-sub{font-size:11px;color:var(--text-3);margin-top:2px}
+.fmt-body{padding:14px 18px}
+.fmt-diagram{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;font-family:'SF Mono','Fira Mono',monospace;font-size:11px;line-height:1.8;color:var(--text-2);white-space:pre;overflow-x:auto}
+.fmt-props{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.fmt-pl{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em}
+.fmt-pv{font-size:11px;color:var(--text-2);margin-top:2px}
+.fmt-section-title{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px}
+.fmt-pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.fmt-pc{background:var(--surface-2);border-radius:var(--r);padding:8px 10px}
+.fmt-pc-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.fmt-pc.pros .fmt-pc-title{color:var(--green)}
+.fmt-pc.cons .fmt-pc-title{color:var(--red)}
+.fmt-pc ul{list-style:none;display:flex;flex-direction:column;gap:3px}
+.fmt-pc ul li{font-size:11px;color:var(--text-2);line-height:1.4;padding-left:10px;position:relative}
+.fmt-pc ul li::before{content:'·';position:absolute;left:2px;color:var(--text-3)}
+.fmt-examples{display:flex;flex-wrap:wrap;gap:4px}
+
+/* ── EMPTY ── */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px;gap:10px;opacity:.5}
+.empty-ico{font-size:36px}
+.empty-txt{color:var(--text-3);font-size:13px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ═══════════════════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════════════════ */
+
+const MODULES = {
+  standings:          { label:'Standings Table',        color:'#22c55e', desc:'League table: P W D L GF GA GD Pts' },
+  group_standings:    { label:'Group Standings',        color:'#60a5fa', desc:'Per-group tables with group labels A/B/C…' },
+  bracket:            { label:'Knockout Bracket',       color:'#f97316', desc:'Visual tree bracket for elimination rounds' },
+  two_leg_aggregate:  { label:'Two-Leg Aggregate',      color:'#a855f7', desc:'Aggregate score across both legs' },
+  leg_context:        { label:'Leg Indicator',          color:'#a855f7', desc:'1st Leg / 2nd Leg context on match pages' },
+  playoffs:           { label:'Playoff Structure',      color:'#06b6d4', desc:'Post-season playoff bracket separate from league' },
+  promo_rel:          { label:'Promo / Rel Zones',      color:'#22c55e', desc:'Zone markers for promotion and relegation bands' },
+  continental_zones:  { label:'Continental Zones',      color:'#60a5fa', desc:'UCL / UEL / UECL qualification zone markers' },
+  annual_table:       { label:'Annual Aggregate Table', color:'#f59e0b', desc:'Multi-season rolling points average for relegation' },
+  split_season:       { label:'Split Season Nav',       color:'#c084fc', desc:'Apertura / Clausura sub-tournament navigation' },
+  phase_nav:          { label:'Phase Navigator',        color:'#60a5fa', desc:'Navigate across qualifying rounds and main phases' },
+  penalty_display:    { label:'Penalty Shootout',       color:'#ef4444', desc:'Pens result separated from regular-time score' },
+  conference:         { label:'Conference Standings',   color:'#06b6d4', desc:'Side-by-side East/West conference tables' },
+  nations_tiers:      { label:'Nations League Tiers',   color:'#22c55e', desc:'League A/B/C/D tier view with promotion/rel' },
+  champ_split:        { label:'Championship Split',     color:'#f97316', desc:'Post-split top-6 and bottom-6 group display' },
+  unified_table:      { label:'Unified League Table',   color:'#38bdf8', desc:'Single 36-team table without group labels' },
+  cuadrangulares:     { label:'Cuadrangulares',         color:'#fb923c', desc:'Mini round-robin of 4-8 teams as final phase' },
+  awards:             { label:'Awards Tracker',         color:'#fcd34d', desc:'Golden Boot / Golden Ball / Team of Tournament' },
+  super_cup:          { label:'Super Cup Display',      color:'#fcd34d', desc:'Single-match showdown between two competition winners' },
+};
+
+const FORMAT_LABELS = {
+  league:                 'Regular League',
+  split_league:           'Apertura / Clausura',
+  league_playoff:         'League + Playoffs',
+  group_knockout:         'Group Stage + Knockout',
+  league_phase_knockout:  'League Phase + Knockout',
+  single_elimination:     'Single Elimination',
+  two_leg_knockout:       'Two-Leg Knockout',
+  nations_league:         'Nations League',
+  championship_split:     'Championship Split',
+  single_match:           'Single Match',
+};
+
+const TIER_LABELS = {
+  global_premium:      'Global Premium',
+  continental_premier: 'Continental Premier',
+  major_national:      'Major National',
+  national:            'National',
+  sub_national:        'Sub-National',
+};
+
+const CAT_LABELS = {
+  domestic_league:    'Domestic League',
+  domestic_cup:       'Domestic Cup',
+  super_cup:          'Super Cup',
+  continental_club:   'Continental Club',
+  continental_nat:    'Continental National',
+  global_club:        'Global Club',
+  global_nat:         'Global National',
+  qualifier:          'Qualifier',
+  regional:           'Regional',
+};
+
+const COMPETITIONS = [
+  /* ───── DOMESTIC LEAGUES ───── */
+  {
+    id:'premier-league', emoji:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Premier League', short:'Premier League',
+    organizer:'Premier League Ltd.', gov:'League Body', confederation:'UEFA', region:'Europe', country:'England',
+    category:'domestic_league', format:'league', tier:'global_premium',
+    participant:'club', teams:20, season:'Aug – May', season_type:'split_year',
+    standings:true, groups:false, bracket:false, playoffs:false, promo_rel:true, two_legs:false,
+    modules:['standings','promo_rel','continental_zones','penalty_display'],
+    description:'England\'s top flight. 20 clubs, 38 matchdays of double round robin. Champion determined by final points tally. Bottom 3 relegated to the Championship. Top 4 qualify for the Champions League.',
+    key_facts:[['Teams','20'],['Matchdays','38'],['Season','Aug – May'],['Relegated','3 (direct)'],['UCL Spots','Top 4'],['UEL Spot','5th place']],
+    ux_implications:[
+      'Standings table is the primary screen — must be live, always visible, and load first.',
+      'Zone markers (UCL, UEL, UECL, relegation play-off, relegation) are critical UI: update live as scores change.',
+      'No groups, no bracket, no aggregate scores — simplest possible data model.',
+      'January transfers split player stats across two clubs within the same season. Totals must be disaggregated by club.',
+      'Form guide (last 5 results) is a standard expected feature on every team row.',
+    ],
+    edge_cases:[
+      'Tiebreaker order: goal difference → goals scored → H2H points → H2H GD. Not alphabetical.',
+      'A cup win can shift which Continental slot a finishing position grants — UCL spots are not always purely positional.',
+      'Clubs finishing equal on all criteria go to a play-off match before the final day (rare but has happened).',
+    ],
+  },
+  {
+    id:'la-liga', emoji:'🇪🇸', name:'La Liga', short:'La Liga',
+    organizer:'RFEF / Liga de Fútbol Profesional', gov:'League Body', confederation:'UEFA', region:'Europe', country:'Spain',
+    category:'domestic_league', format:'league', tier:'global_premium',
+    participant:'club', teams:20, season:'Aug – May', season_type:'split_year',
+    standings:true, groups:false, bracket:false, playoffs:false, promo_rel:true, two_legs:false,
+    modules:['standings','promo_rel','continental_zones','penalty_display'],
+    description:'Spain\'s premier division. 20 clubs, 38 matchdays. Historically dominated by Real Madrid and FC Barcelona. Same structure as the Premier League — double round robin, final standings decide champion.',
+    key_facts:[['Teams','20'],['Matchdays','38'],['Season','Aug – May'],['Relegated','3 (direct)'],['UCL Spots','Top 4'],['Format','Double Round Robin']],
+    ux_implications:[
+      'Identical structural model to Premier League — standings-first, no bracket.',
+      'Supercopa de España (super cup involving top 4 clubs, played in Saudi Arabia) is a separate competition linked to this one.',
+      'Relegation play-off between 18th place and the 3rd division is rare but possible.',
+    ],
+    edge_cases:[
+      'Supercopa is a mini-tournament of 4 clubs (2 semis + final), played in a neutral country — unusual super cup format.',
+      'Financial fair play criteria can affect club participation in European competitions independently of league position.',
+    ],
+  },
+  {
+    id:'bundesliga', emoji:'🇩🇪', name:'Bundesliga', short:'Bundesliga',
+    organizer:'DFL Deutsche Fußball Liga', gov:'League Body', confederation:'UEFA', region:'Europe', country:'Germany',
+    category:'domestic_league', format:'league', tier:'global_premium',
+    participant:'club', teams:18, season:'Aug – May', season_type:'split_year',
+    standings:true, groups:false, bracket:false, playoffs:true, promo_rel:true, two_legs:false,
+    modules:['standings','promo_rel','continental_zones','playoffs','penalty_display'],
+    description:'Germany\'s top division. 18 clubs, 34 matchdays. 17th-place team enters a two-leg relegation play-off against the 3rd-placed team from 2. Bundesliga.',
+    key_facts:[['Teams','18'],['Matchdays','34'],['Season','Aug – May'],['Direct Rel.','2 clubs (16th, 17th)'],['Rel. Play-off','18th vs 2.BL 3rd'],['UCL Spots','Top 4']],
+    ux_implications:[
+      'Relegation play-off adds a second match series for one club — must display two-leg aggregate.',
+      'Two-leg tie model needed for relegation play-off even though the main format has none.',
+    ],
+    edge_cases:[
+      '50+1 ownership rule is unique to Germany — clubs must be majority-owned by members. Affects club profiles.',
+      'Winter break is longer than most European leagues — fixture density calendar differs.',
+    ],
+  },
+  {
+    id:'serie-a', emoji:'🇮🇹', name:'Serie A', short:'Serie A',
+    organizer:'Lega Serie A', gov:'League Body', confederation:'UEFA', region:'Europe', country:'Italy',
+    category:'domestic_league', format:'league', tier:'major_national',
+    participant:'club', teams:20, season:'Aug – May', season_type:'split_year',
+    standings:true, groups:false, bracket:false, playoffs:false, promo_rel:true, two_legs:false,
+    modules:['standings','promo_rel','continental_zones','penalty_display'],
+    description:'Italy\'s top division. 20 clubs, 38 matchdays. Standard double round robin. Bottom 3 relegated directly.',
+    key_facts:[['Teams','20'],['Matchdays','38'],['Season','Aug – May'],['Relegated','3 (direct)'],['UCL Spots','Top 4']],
+    ux_implications:['Structurally identical to Premier League — standings-centric, no bracket.'],
+    edge_cases:['Coppa Italia uses a mix of single-leg and two-leg rounds depending on the stage.'],
+  },
+  {
+    id:'ligue-1', emoji:'🇫🇷', name:'Ligue 1', short:'Ligue 1',
+    organizer:'Ligue de Football Professionnel', gov:'League Body', confederation:'UEFA', region:'Europe', country:'France',
+    category:'domestic_league', format:'league', tier:'major_national',
+    participant:'club', teams:18, season:'Aug – May', season_type:'split_year',
+    standings:true, groups:false, bracket:false, playoffs:false, promo_rel:true, two_legs:false,
+    modules:['standings','promo_rel','continental_zones','penalty_display'],
+    description:'France\'s top division. Reduced to 18 clubs from 2023–24. Standard double round robin format.',
+    key_facts:[['Teams','18'],['Matchdays','34'],['Season','Aug – May'],['Relegated','3'],['UCL Spots','Top 3']],
+    ux_implications:['18-team format means 34 matchdays — must not assume 38.'],
+    edge_cases:['Recent switch from 20 to 18 teams means historical season stats are not directly comparable.'],
+  },
+  {
+    id:'scottish-prem', emoji:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', name:'Scottish Premiership', short:'Scottish Prem.',
+    organizer:'Scottish Professional Football League', gov:'National Federation', confederation:'UEFA', region:'Europe', country:'Scotland',
+    category:'domestic_league', format:'championship_split', tier:'national',
+    participant:'club', teams:12, season:'Aug – May', season_type:'split_year',
+    standings:true, groups:false, bracket:false, playoffs:true, promo_rel:true, two_legs:false,
+    modules:['standings','promo_rel','champ_split','playoffs'],
+    description:'12 clubs play 33 rounds, then split into a Championship Group (top 6) and Relegation Group (bottom 6), each playing 5 more rounds. Points carry over in full. A relegation play-off exists between 11th place and the runners-up of the Championship play-offs.',
+    key_facts:[['Teams','12'],['Phase 1','33 matchdays'],['Phase 2','5 more per group'],['Split','After matchday 33'],['Rel. Play-off','11th vs lower div']],
+    ux_implications:[
+      'Standings view must change structure mid-season: single table → two split groups.',
+      'Must label matchdays as pre-split and post-split to avoid confusion.',
+      'Points carry over fully — no reset at the split.',
+    ],
+    edge_cases:[
+      'A team can be 7th before the split but end up higher than a team that was 5th if their post-split form differs.',
+      'The split creates unequal remaining schedules: top-6 teams play each other, bottom-6 teams play each other only.',
+    ],
+  },
+  {
+    id:'mls', emoji:'🇺🇸', name:'MLS', short:'MLS',
+    organizer:'Major League Soccer LLC', gov:'League Body', confederation:'CONCACAF', region:'North America', country:'USA / Canada',
+    category:'domestic_league', format:'league_playoff', tier:'major_national',
+    participant:'club', teams:29, season:'Feb – Nov', season_type:'calendar_year',
+    standings:true, groups:false, bracket:true, playoffs:true, promo_rel:false, two_legs:false,
+    modules:['standings','conference','playoffs','bracket','penalty_display'],
+    description:'Top US/Canadian soccer league. Two conferences (Eastern, Western). Unbalanced regular season schedule (~34 games). Top 7 per conference enter the MLS Cup Playoffs — single-elimination, with higher seed hosting. The championship is decided by playoffs, not by regular season standing.',
+    key_facts:[['Teams','29'],['Conferences','2 (East/West)'],['Season','Feb – Nov'],['Playoff Teams','14 (7 per conf)'],['Relegation','None'],['Champion','Playoff winner']],
+    ux_implications:[
+      'Two parallel standings views: conference standings (primary) and overall Supporters\' Shield table.',
+      'Regular season winner gets the Supporters\' Shield — a separate award, not the championship.',
+      'Playoff bracket must support a 14-team single-elimination structure with home-field advantage for higher seeds.',
+      'No relegation — no relegation zone markers needed.',
+      'Canadian teams (Toronto, Montreal, Vancouver) compete in a US league — mixed-nationality league.',
+    ],
+    edge_cases:[
+      'Supporters\' Shield (best regular season record) ≠ MLS Cup (playoff champion). Two separate title data points per season.',
+      'Unbalanced schedule: some pairs play twice, others once. Standings comparisons are indirect.',
+      'Designated Player (DP) and Homegrown Player rules affect roster composition and salary cap data.',
+    ],
+  },
+  {
+    id:'liga-mx', emoji:'🇲🇽', name:'Liga MX', short:'Liga MX',
+    organizer:'Liga MX', gov:'League Body', confederation:'CONCACAF', region:'North America', country:'Mexico',
+    category:'domestic_league', format:'split_league', tier:'major_national',
+    participant:'club', teams:18, season:'Jul – May', season_type:'calendar_year',
+    standings:true, groups:false, bracket:true, playoffs:true, promo_rel:false, two_legs:true,
+    modules:['standings','split_season','playoffs','bracket','two_leg_aggregate','leg_context','annual_table','penalty_display'],
+    description:'Mexico\'s top league. Two independent tournaments per year: Apertura (Jul–Dec) and Clausura (Jan–May). Each has a regular phase followed by a Liguilla (playoff bracket of top 12 teams). Two-leg quarterfinals, semis, and final. The champion of each tournament qualifies for the CONCACAF Champions Cup.',
+    key_facts:[['Teams','18'],['Tournaments/Yr','2 (Apertura + Clausura)'],['Playoff Teams','12 per tournament'],['Final','Two legs (aggregate)'],['Relegation','None (currently)'],['Annual Table','Used for rankings/seeding']],
+    ux_implications:[
+      'Season selector must distinguish Apertura from Clausura — they are separate competitions with separate champions.',
+      'Both the regular-phase standings and the Liguilla bracket must be accessible per tournament.',
+      'All Liguilla rounds are two-leg ties — aggregate score display is required throughout.',
+      'Annual cumulative table exists for seeding and historical reference but is not used for relegation currently.',
+      'Two champions per calendar year — cannot model as a single annual champion.',
+    ],
+    edge_cases:[
+      'No relegation since 2020 — teams cannot be demoted. Historical data includes relegation; current data does not.',
+      '12 of 18 teams qualify for the Liguilla — a majority of clubs are in the playoff, which dilutes regular season stakes.',
+      'Copa MX (domestic cup) has been suspended; must be flagged as inactive if displayed.',
+    ],
+  },
+  {
+    id:'brasileirao', emoji:'🇧🇷', name:'Brasileirão Série A', short:'Brasileirão',
+    organizer:'CBF', gov:'National Federation', confederation:'CONMEBOL', region:'South America', country:'Brazil',
+    category:'domestic_league', format:'league', tier:'major_national',
+    participant:'club', teams:20, season:'Apr – Dec', season_type:'calendar_year',
+    standings:true, groups:false, bracket:false, playoffs:false, promo_rel:true, two_legs:false,
+    modules:['standings','promo_rel','continental_zones','penalty_display'],
+    description:'Brazil\'s national top division. 20 clubs, 38 matchdays. Calendar-year season (Apr–Dec). 4 clubs relegated; 4 promoted from Série B. Top clubs also compete in Copa do Brasil and Copa Libertadores simultaneously.',
+    key_facts:[['Teams','20'],['Matchdays','38'],['Season','Apr – Dec'],['Relegated','4 (direct)'],['Libertadores Spots','Top 6 (G6)'],['Sudamericana Spots','7th & 8th']],
+    ux_implications:[
+      'Calendar-year season — season label is a single year, not split (e.g., "2024 Brasileirão").',
+      'Brazilian clubs concurrently play Brasileirão (weekends) + Copa Libertadores (midweek) + Estaduais (early season).',
+      'Must clearly separate each competition\'s stats — Brasileirão goals ≠ Libertadores goals.',
+    ],
+    edge_cases:[
+      'State championships (Estaduais) run Jan–Apr, before the national season. Same clubs, different competition. 27 separate state competitions exist.',
+      '4 relegated (not 3) — cannot assume standard European 3-team relegation.',
+    ],
+  },
+  {
+    id:'liga-arg', emoji:'🇦🇷', name:'Liga Profesional Argentina', short:'Liga Argentina',
+    organizer:'AFA', gov:'National Federation', confederation:'CONMEBOL', region:'South America', country:'Argentina',
+    category:'domestic_league', format:'league', tier:'major_national',
+    participant:'club', teams:28, season:'Feb – Dec', season_type:'calendar_year',
+    standings:true, groups:false, bracket:false, playoffs:false, promo_rel:true, two_legs:false,
+    modules:['standings','promo_rel','continental_zones','annual_table','penalty_display'],
+    description:'Argentina\'s top division. Currently a single annual tournament (previously Apertura/Clausura). Relegation is historically calculated via a multi-year points average (promedios), though the system has been reformed multiple times.',
+    key_facts:[['Teams','28 (varies)'],['Season','Feb – Dec'],['Relegation','Promedios system (historical)'],['Format','Single annual league']],
+    ux_implications:[
+      'Historically had Apertura/Clausura — older data follows that model. Current data is a single annual table.',
+      'Promedios relegation requires tracking a 3-year rolling average — a separate calculation model from single-season standings.',
+    ],
+    edge_cases:[
+      'The promedios (relegation average) system means a team can win a tournament and still be relegated if their multi-year average is poor.',
+      'Format has changed multiple times — any historical comparison tool must account for structural changes.',
+    ],
+  },
+  {
+    id:'liga-colombia', emoji:'🇨🇴', name:'Colombian Liga BetPlay', short:'Colombian Liga',
+    organizer:'Dimayor', gov:'National Federation', confederation:'CONMEBOL', region:'South America', country:'Colombia',
+    category:'domestic_league', format:'split_league', tier:'national',
+    participant:'club', teams:20, season:'Jan – Dec', season_type:'calendar_year',
+    standings:true, groups:true, bracket:true, playoffs:true, promo_rel:true, two_legs:true,
+    modules:['standings','split_season','cuadrangulares','group_standings','bracket','two_leg_aggregate','leg_context','annual_table','penalty_display'],
+    description:'Two tournaments per year: Apertura and Finalización. Each has a regular phase (league table), then Cuadrangulares Semifinales (top 8 split into 2 groups of 4, home-and-away), then a two-leg Final between the two group winners.',
+    key_facts:[['Teams','20'],['Tournaments/Yr','2'],['Cuadrangulares','8 teams, 2 groups of 4'],['Final','Two legs'],['Relegation','Multi-year average'],['Format','Apertura + Cuadrangulares + Final']],
+    ux_implications:[
+      'Three distinct phase types within one tournament: regular phase, cuadrangulares groups, final.',
+      'The word "group" appears twice in one competition: regular-season table AND cuadrangulares groups — must differentiate clearly in UI.',
+      '"Standings" means different things per phase: full-table in regular phase, 4-team group table in cuadrangulares.',
+      'Multi-year relegation average requires historical data spanning multiple seasons.',
+    ],
+    edge_cases:[
+      'Cuadrangulares are not simply a bracket — they are home-and-away mini round robins. Bracket visualization is misleading for this phase.',
+      'Teams can finish high in the regular phase but fail to advance from the cuadrangulares — seeding ≠ advancement.',
+    ],
+  },
+  /* ───── DOMESTIC CUPS ───── */
+  {
+    id:'fa-cup', emoji:'🏆', name:'FA Cup', short:'FA Cup',
+    organizer:'The Football Association', gov:'National Federation', confederation:'UEFA', region:'Europe', country:'England',
+    category:'domestic_cup', format:'single_elimination', tier:'national',
+    participant:'club', teams:700, season:'Aug – May', season_type:'split_year',
+    standings:false, groups:false, bracket:true, playoffs:false, promo_rel:false, two_legs:false,
+    modules:['bracket','penalty_display'],
+    description:'The world\'s oldest football competition. Open to all ~700+ FA-registered clubs from the amateur pyramid through the Premier League. Pure single-elimination. Replays were historically used for drawn matches but abolished from 2024–25.',
+    key_facts:[['Teams','700+'],['Entry','Amateur to Premier League'],['Format','Single elimination'],['Replays','Abolished 2024–25'],['Final','Neutral (Wembley)']],
+    ux_implications:[
+      'No standings table — bracket is the only navigation structure.',
+      'Large field size (700+) means early rounds must be filterable — impossible to display all matches at once.',
+      'Amateur clubs appear in early rounds and drop off — round-of-entry filtering is required.',
+      'Round naming is non-standard: Extra Preliminary, Preliminary, Qualifying rounds, then numbered proper rounds.',
+    ],
+    edge_cases:[
+      'Premier League clubs do not enter until the 3rd Round — two separate entry points in the same competition.',
+      'Ties with drawn scores historically went to a replay at the away team\'s ground — this generated an extra match mid-competition.',
+    ],
+  },
+  {
+    id:'copa-do-brasil', emoji:'🇧🇷', name:'Copa do Brasil', short:'Copa do Brasil',
+    organizer:'CBF', gov:'National Federation', confederation:'CONMEBOL', region:'South America', country:'Brazil',
+    category:'domestic_cup', format:'two_leg_knockout', tier:'national',
+    participant:'club', teams:92, season:'Feb – Nov', season_type:'calendar_year',
+    standings:false, groups:false, bracket:true, playoffs:false, promo_rel:false, two_legs:true,
+    modules:['bracket','two_leg_aggregate','leg_context','penalty_display'],
+    description:'Brazil\'s domestic cup. 92 teams, every round (including the final) is played over two legs. The winner qualifies for the Copa Libertadores. Runs concurrently with the Brasileirão.',
+    key_facts:[['Teams','92'],['Format','Two-leg KO, all rounds'],['Final','Two legs'],['Libertadores','1 automatic spot']],
+    ux_implications:[
+      'Aggregate score display is required from Round 1 through the Final — every single round is two-leg.',
+      'No round in this competition is a single match except (rarely) if a team withdraws.',
+      'Final is two-leg, played home-and-away between the two finalists — no neutral venue.',
+    ],
+    edge_cases:[
+      'A team can be beaten in the first leg at home and still advance via a strong away performance in the second leg.',
+      'Same clubs participate in Brasileirão (Saturdays), Copa do Brasil (midweek), and Copa Libertadores (midweek) simultaneously.',
+    ],
+  },
+  {
+    id:'dfb-pokal', emoji:'🇩🇪', name:'DFB-Pokal', short:'DFB-Pokal',
+    organizer:'DFB', gov:'National Federation', confederation:'UEFA', region:'Europe', country:'Germany',
+    category:'domestic_cup', format:'single_elimination', tier:'national',
+    participant:'club', teams:64, season:'Aug – May', season_type:'split_year',
+    standings:false, groups:false, bracket:true, playoffs:false, promo_rel:false, two_legs:false,
+    modules:['bracket','penalty_display'],
+    description:'Germany\'s primary domestic cup. 64 teams, single-elimination throughout. Bundesliga clubs enter in Round 1. Winner qualifies for Europa League (if not already qualified via league).',
+    key_facts:[['Teams','64'],['Format','Single elimination'],['Final','Neutral (Berlin)'],['UEL Spot','Winner (conditional)']],
+    ux_implications:['Smaller field than FA Cup (64 vs 700+) — all matches displayable from Round 1.'],
+    edge_cases:['If the cup winner already qualified for European competition via the league, the UEL spot passes to the next eligible team.'],
+  },
+  /* ───── SUPER CUPS ───── */
+  {
+    id:'uefa-super-cup', emoji:'🇪🇺', name:'UEFA Super Cup', short:'UEFA Super Cup',
+    organizer:'UEFA', gov:'Confederation', confederation:'UEFA', region:'Europe', country:'',
+    category:'super_cup', format:'single_match', tier:'continental_premier',
+    participant:'club', teams:2, season:'Aug', season_type:'split_year',
+    standings:false, groups:false, bracket:false, playoffs:false, promo_rel:false, two_legs:false,
+    modules:['super_cup','penalty_display'],
+    description:'Single match between the UEFA Champions League winner and the UEFA Europa League winner. Played at a neutral venue in August, before the new season begins.',
+    key_facts:[['Teams','2'],['Format','Single match'],['Venue','Neutral'],['Timing','August (pre-season)']],
+    ux_implications:[
+      'Simplest possible competition structure — one match, no standings, no bracket.',
+      'Still requires: extra time and penalty shootout if level after 90 minutes.',
+      'Must clearly reference the two source competitions (UCL winner, UEL winner).',
+    ],
+    edge_cases:['If the same club wins both the UCL and UEL, the opponent is replaced by the Conference League winner or next-ranked eligible team.'],
+  },
+  /* ───── CONTINENTAL CLUB ───── */
+  {
+    id:'ucl', emoji:'⭐', name:'UEFA Champions League', short:'UCL',
+    organizer:'UEFA', gov:'Confederation', confederation:'UEFA', region:'Europe', country:'',
+    category:'continental_club', format:'league_phase_knockout', tier:'global_premium',
+    participant:'club', teams:36, season:'Aug – May', season_type:'split_year',
+    standings:true, groups:false, bracket:true, playoffs:true, promo_rel:false, two_legs:true,
+    modules:['unified_table','phase_nav','playoffs','bracket','two_leg_aggregate','leg_context','penalty_display','awards'],
+    description:'Europe\'s premier club competition. From 2024–25: 36 teams in a unified league phase (no groups), each playing 8 matches against different opponents. Positions 1–8 advance directly to Round of 16. Positions 9–24 enter a knock-out play-off round. Positions 25–36 eliminated. Knockout rounds are two-leg home-and-away (except the final).',
+    key_facts:[['Teams','36 (league phase)'],['League Phase','8 matches each'],['Direct R16','Top 8'],['Play-off Round','Pos 9–24'],['Eliminated','Pos 25–36'],['Final','Single match, neutral']],
+    ux_implications:[
+      'Cannot be displayed as groups — it is one unified standings table of 36 teams.',
+      'Each team has played different opponents — fixture symmetry does not apply. The standings require a "Played N" context.',
+      'Three distinct outcomes from the league phase (direct R16, play-off, eliminated) must be visually zones in the standings.',
+      'An intermediate play-off round exists between the league phase and Round of 16 — the bracket is incomplete until this resolves.',
+      'Away goals rule is abolished — extra time and penalties decide level aggregates in all KO rounds.',
+    ],
+    edge_cases:[
+      '"Group stage" language is wrong for this competition since 2024–25. Use "League Phase".',
+      'Teams can enter at different stages (qualifying rounds) — some have played 3 extra matches before the league phase begins.',
+      'Seeding pots for the league phase draw affect which opponents each team faces — not all 8-match schedules are equally difficult.',
+    ],
+  },
+  {
+    id:'uel', emoji:'🟠', name:'UEFA Europa League', short:'UEL',
+    organizer:'UEFA', gov:'Confederation', confederation:'UEFA', region:'Europe', country:'',
+    category:'continental_club', format:'league_phase_knockout', tier:'continental_premier',
+    participant:'club', teams:36, season:'Aug – May', season_type:'split_year',
+    standings:true, groups:false, bracket:true, playoffs:true, promo_rel:false, two_legs:true,
+    modules:['unified_table','phase_nav','playoffs','bracket','two_leg_aggregate','leg_context','penalty_display'],
+    description:'UEFA\'s secondary club competition. Same new format as UCL from 2024–25: 36-team league phase (8 matches each), then play-off round, then knockout rounds. Winner qualifies for UCL next season and UEFA Super Cup.',
+    key_facts:[['Teams','36'],['Format','Same as UCL'],['Season','Aug – May'],['UCL Access','Winner enters next UCL']],
+    ux_implications:['Identical structural model to UCL — same UI components required. Only branding, scale of teams, and commercial profile differs.'],
+    edge_cases:['UCL group-stage dropouts feed into the UEL knockout round — teams can enter mid-competition from a higher competition.'],
+  },
+  {
+    id:'uecl', emoji:'🟢', name:'UEFA Conference League', short:'UECL',
+    organizer:'UEFA', gov:'Confederation', confederation:'UEFA', region:'Europe', country:'',
+    category:'continental_club', format:'league_phase_knockout', tier:'continental_premier',
+    participant:'club', teams:36, season:'Aug – May', season_type:'split_year',
+    standings:true, groups:false, bracket:true, playoffs:true, promo_rel:false, two_legs:true,
+    modules:['unified_table','phase_nav','playoffs','bracket','two_leg_aggregate','leg_context','penalty_display'],
+    description:'UEFA\'s third-tier club competition, introduced in 2021–22. Same new 36-team league phase format from 2024–25. Gives smaller football nations regular European football access.',
+    key_facts:[['Teams','36'],['Introduced','2021–22'],['Format','Same as UCL/UEL since 2024–25']],
+    ux_implications:['Identical structural model to UCL/UEL. Three tier-3 competitions with the same format means the component library must be truly generic.'],
+    edge_cases:['UEL play-off dropouts feed into the UECL knockout round — cross-competition team movement mid-season.'],
+  },
+  {
+    id:'copa-libertadores', emoji:'🏆', name:'Copa Libertadores', short:'Libertadores',
+    organizer:'CONMEBOL', gov:'Confederation', confederation:'CONMEBOL', region:'South America', country:'',
+    category:'continental_club', format:'group_knockout', tier:'global_premium',
+    participant:'club', teams:32, season:'Feb – Nov', season_type:'calendar_year',
+    standings:true, groups:true, bracket:true, playoffs:false, promo_rel:false, two_legs:true,
+    modules:['group_standings','phase_nav','bracket','two_leg_aggregate','leg_context','penalty_display','awards'],
+    description:'South America\'s premier club competition. Preliminary phases feed into a group stage (8 groups of 4) then two-leg knockout rounds through to the final (single match at a neutral venue since 2019). Runs Feb–Nov alongside domestic seasons.',
+    key_facts:[['Groups','8 groups of 4'],['Advance','Top 2 per group'],['KO Rounds','Two-leg until Final'],['Final','Single match, neutral'],['Season','Feb – Nov (calendar year)']],
+    ux_implications:[
+      'Group stage with 8 groups is the primary navigation hub — group selector is essential.',
+      'All knockout rounds up to and including semi-finals are two-leg — aggregate display always required.',
+      'Final is a single match at a neutral venue — switch from two-leg to single-match for the last round only.',
+      'Entry points differ: Brazilian clubs enter later because their domestic season starts in April.',
+    ],
+    edge_cases:[
+      'Away goals rule was abolished by CONMEBOL in 2023 — historical data (pre-2023) used away goals; current data does not.',
+      'Clubs from Bolivia and Ecuador compete at high altitude — a known competitive factor mentioned in previews and match context.',
+    ],
+  },
+  {
+    id:'copa-sudamericana', emoji:'🟡', name:'Copa Sudamericana', short:'Sudamericana',
+    organizer:'CONMEBOL', gov:'Confederation', confederation:'CONMEBOL', region:'South America', country:'',
+    category:'continental_club', format:'group_knockout', tier:'continental_premier',
+    participant:'club', teams:32, season:'Feb – Nov', season_type:'calendar_year',
+    standings:true, groups:true, bracket:true, playoffs:false, promo_rel:false, two_legs:true,
+    modules:['group_standings','phase_nav','bracket','two_leg_aggregate','leg_context','penalty_display'],
+    description:'CONMEBOL\'s secondary club competition. Similar structure to Libertadores with group stage and two-leg knockout rounds. Winner qualifies for the Copa Libertadores the following year and the Recopa Sudamericana.',
+    key_facts:[['Format','Group stage + two-leg KO'],['Groups','8 groups of 4'],['Winner','Qualifies for Libertadores']],
+    ux_implications:['Identical structural model to Copa Libertadores. Groups of teams who were eliminated from Libertadores may also enter — cross-competition pathways.'],
+    edge_cases:['Clubs eliminated from Copa Libertadores group stage drop into Copa Sudamericana knockout rounds — creates mid-competition entries.'],
+  },
+  {
+    id:'concacaf-champions', emoji:'🌎', name:'CONCACAF Champions Cup', short:'Champions Cup',
+    organizer:'CONCACAF', gov:'Confederation', confederation:'CONCACAF', region:'North America', country:'',
+    category:'continental_club', format:'two_leg_knockout', tier:'continental_premier',
+    participant:'club', teams:27, season:'Feb – Apr', season_type:'calendar_year',
+    standings:false, groups:false, bracket:true, playoffs:false, promo_rel:false, two_legs:true,
+    modules:['bracket','two_leg_aggregate','leg_context','penalty_display'],
+    description:'North and Central America\'s premier club competition. Pure two-leg knockout from the Round of 32 through to the Final. MLS clubs compete against Liga MX clubs, creating the "Leagues Cup" crossover narrative.',
+    key_facts:[['Teams','27'],['Format','Two-leg KO all rounds'],['Season','Feb – Apr'],['MLS vs LigaMX','Key rivalry']],
+    ux_implications:['All rounds are two-leg — aggregate display is always required. No group stage navigation needed.'],
+    edge_cases:['MLS and Liga MX clubs are on different seasonal calendars — MLS clubs play this mid-pre-season while Liga MX clubs are mid-Clausura.'],
+  },
+  {
+    id:'afc-cl-elite', emoji:'🌏', name:'AFC Champions League Elite', short:'AFC CL Elite',
+    organizer:'AFC', gov:'Confederation', confederation:'AFC', region:'Asia', country:'',
+    category:'continental_club', format:'league_phase_knockout', tier:'continental_premier',
+    participant:'club', teams:24, season:'Sep – May', season_type:'split_year',
+    standings:true, groups:false, bracket:true, playoffs:false, promo_rel:false, two_legs:true,
+    modules:['unified_table','phase_nav','bracket','two_leg_aggregate','leg_context','penalty_display'],
+    description:'Asia\'s top club competition, rebranded and reformatted in 2023–24. League phase with 24 teams followed by two-leg knockout rounds. Split into East and West zones within the league phase.',
+    key_facts:[['Teams','24'],['Format','League phase + KO'],['Zones','East & West within league phase'],['Final','Two legs']],
+    ux_implications:['League phase split into East/West sub-tables — needs a zone selector within the unified league phase view.'],
+    edge_cases:['East and West zone top teams cross-over in the knockout — zone membership affects bracket seeding.'],
+  },
+  {
+    id:'caf-cl', emoji:'🌍', name:'CAF Champions League', short:'CAF CL',
+    organizer:'CAF', gov:'Confederation', confederation:'CAF', region:'Africa', country:'',
+    category:'continental_club', format:'group_knockout', tier:'continental_premier',
+    participant:'club', teams:16, season:'Sep – May', season_type:'split_year',
+    standings:true, groups:true, bracket:true, playoffs:false, promo_rel:false, two_legs:true,
+    modules:['group_standings','phase_nav','bracket','two_leg_aggregate','leg_context','penalty_display'],
+    description:'Africa\'s top club competition. Group stage followed by two-leg knockout. The final is a single match at a neutral venue.',
+    key_facts:[['Teams','16'],['Groups','4 groups of 4'],['Final','Single match, neutral']],
+    ux_implications:['Standard group + KO model. Smaller team count than European equivalents.'],
+    edge_cases:['Multiple preliminary rounds exist before the group stage — some clubs play 6+ rounds to reach the group stage.'],
+  },
+  /* ───── CONTINENTAL NATIONAL TEAMS ───── */
+  {
+    id:'euro', emoji:'🇪🇺', name:'UEFA European Championship', short:'UEFA Euro',
+    organizer:'UEFA', gov:'Confederation', confederation:'UEFA', region:'Europe', country:'',
+    category:'continental_nat', format:'group_knockout', tier:'global_premium',
+    participant:'national_team', teams:24, season:'Jun – Jul', season_type:'multi_year',
+    standings:true, groups:true, bracket:true, playoffs:false, promo_rel:false, two_legs:false,
+    modules:['group_standings','bracket','penalty_display','awards'],
+    description:'UEFA\'s flagship national team tournament. 24 nations in 6 groups of 4. Top 2 per group + 4 best third-placed nations (16 total) advance to single-leg knockout rounds. Held in the summer of even-numbered years, hosted by one or more nations.',
+    key_facts:[['Teams','24'],['Groups','6 groups of 4'],['Advance','Top 2 + 4 best thirds'],['KO Format','Single-leg'],['Frequency','Every 4 years']],
+    ux_implications:[
+      '"Best third-placed teams" qualification requires a secondary ranking table across all 6 groups after the group stage — a non-trivial calculation.',
+      'The bracket seeding depends on which groups the best-third teams come from — bracket positions are not pre-set.',
+      'Third-place play-off is NOT included (unlike World Cup) — the competition ends at the Final.',
+      'Player data is national team context: caps, international goals, eligibility nationality.',
+    ],
+    edge_cases:[
+      'Best-third-placed team ranking creates a table of 6 teams but only 4 advance — displayed alongside group tables but separate from them.',
+      'A player can switch national team allegiance (once) under FIFA/UEFA rules — eligibility history matters for older player profiles.',
+    ],
+  },
+  {
+    id:'nations-league', emoji:'🏛️', name:'UEFA Nations League', short:'Nations League',
+    organizer:'UEFA', gov:'Confederation', confederation:'UEFA', region:'Europe', country:'',
+    category:'continental_nat', format:'nations_league', tier:'continental_premier',
+    participant:'national_team', teams:54, season:'Sep – Jun', season_type:'multi_year',
+    standings:true, groups:true, bracket:true, playoffs:true, promo_rel:true, two_legs:false,
+    modules:['nations_tiers','group_standings','bracket','promo_rel','penalty_display'],
+    description:'54 UEFA nations split into 4 leagues (A, B, C, D) based on ranking. Home-and-away group matches determine league standings. Promotion/relegation between leagues. League A group winners host a Final Four (2 semis + Final + 3rd-place match). Also generates Euro qualification play-off spots.',
+    key_facts:[['Teams','54'],['Leagues','A (16), B (16), C (16), D (6)'],['Groups per League','4 groups of 4'],['Final Four','4 League A group winners'],['Promo/Rel','Between leagues'],['Frequency','Every 2 years']],
+    ux_implications:[
+      'The primary navigation must show 4 leagues, each with its own groups — a two-level hierarchy (league → group).',
+      'Promotion and relegation between leagues is a core feature: League D winners → League C, etc.',
+      'Final Four is a separate mini-tournament within the same competition — phase navigation required.',
+      'The competition also generates Euro qualifier play-off slots — cross-competition context needed.',
+    ],
+    edge_cases:[
+      'Groups can be of 3 or 4 teams depending on the league — cannot assume uniform group sizes.',
+      'A League A group winner who is hosting the Final Four may have home advantage — a logistical note, not a data model issue.',
+      'Nations League results affect UEFA coefficient rankings which affect future competition seeding.',
+    ],
+  },
+  {
+    id:'copa-america', emoji:'🌎', name:'Copa América', short:'Copa América',
+    organizer:'CONMEBOL', gov:'Confederation', confederation:'CONMEBOL', region:'South America', country:'',
+    category:'continental_nat', format:'group_knockout', tier:'global_premium',
+    participant:'national_team', teams:16, season:'Jun – Jul', season_type:'multi_year',
+    standings:true, groups:true, bracket:true, playoffs:false, promo_rel:false, two_legs:false,
+    modules:['group_standings','bracket','penalty_display','awards'],
+    description:'South America\'s national team championship. 16 teams (10 CONMEBOL + 6 invited CONCACAF nations) in 4 groups of 4. Top 2 per group advance to knockout. Frequency has varied historically — now roughly every 4 years (held jointly with CONCACAF at times).',
+    key_facts:[['Teams','16 (10 CONMEBOL + 6 invited)'],['Groups','4 groups of 4'],['Advance','Top 2 per group'],['3rd-Place Match','Yes'],['Frequency','Irregular (≈ every 4 years)']],
+    ux_implications:['Invited nations (CONCACAF) means some teams are not from the host confederation — must handle mixed confederation rosters.'],
+    edge_cases:['Copa América was held in 2019, 2021, and 2024 — unusual back-to-back scheduling breaks the standard 4-year cycle.'],
+  },
+  {
+    id:'gold-cup', emoji:'🌎', name:'CONCACAF Gold Cup', short:'Gold Cup',
+    organizer:'CONCACAF', gov:'Confederation', confederation:'CONCACAF', region:'North America', country:'',
+    category:'continental_nat', format:'group_knockout', tier:'continental_premier',
+    participant:'national_team', teams:16, season:'Jun – Jul', season_type:'multi_year',
+    standings:true, groups:true, bracket:true, playoffs:false, promo_rel:false, two_legs:false,
+    modules:['group_standings','bracket','penalty_display'],
+    description:'CONCACAF\'s flagship national team competition. 16 nations, 4 groups of 4, single-leg knockout rounds. Held every 2 years. The champion qualifies for the CONMEBOL-CONCACAF champion play-off.',
+    key_facts:[['Teams','16'],['Groups','4 of 4'],['Frequency','Every 2 years'],['Host','USA primarily']],
+    ux_implications:['Standard group + single-leg KO model. Same structural requirements as Copa América.'],
+    edge_cases:['Invited nations from outside CONCACAF sometimes participate in expanded editions.'],
+  },
+  {
+    id:'afcon', emoji:'🌍', name:'Africa Cup of Nations', short:'AFCON',
+    organizer:'CAF', gov:'Confederation', confederation:'CAF', region:'Africa', country:'',
+    category:'continental_nat', format:'group_knockout', tier:'continental_premier',
+    participant:'national_team', teams:24, season:'Jan – Feb', season_type:'multi_year',
+    standings:true, groups:true, bracket:true, playoffs:false, promo_rel:false, two_legs:false,
+    modules:['group_standings','bracket','penalty_display','awards'],
+    description:'Africa\'s premier national team tournament. 24 nations, 6 groups of 4. Top 2 per group + 4 best third-placed advance to Round of 16. Held in January–February, which clashes with European club seasons and creates significant player release pressure.',
+    key_facts:[['Teams','24'],['Groups','6 of 4'],['Advance','Top 2 + 4 best thirds'],['Timing','Jan–Feb (mid European season)'],['Frequency','Every 2 years']],
+    ux_implications:[
+      'Same "best third-placed teams" complexity as UEFA Euro.',
+      'Timing (Jan–Feb) overlaps with European domestic seasons — clubs must release players mid-season.',
+    ],
+    edge_cases:['Held in January historically conflicted with European club schedules — some editions moved to June–July to reduce disruption.'],
+  },
+  {
+    id:'afc-asian-cup', emoji:'🌏', name:'AFC Asian Cup', short:'Asian Cup',
+    organizer:'AFC', gov:'Confederation', confederation:'AFC', region:'Asia', country:'',
+    category:'continental_nat', format:'group_knockout', tier:'continental_premier',
+    participant:'national_team', teams:24, season:'Jan', season_type:'multi_year',
+    standings:true, groups:true, bracket:true, playoffs:false, promo_rel:false, two_legs:false,
+    modules:['group_standings','bracket','penalty_display'],
+    description:'Asia\'s top national team tournament. 24 nations in 6 groups of 4. Same best-thirds format as Euro and AFCON. Held every 4 years.',
+    key_facts:[['Teams','24'],['Groups','6 of 4'],['Best Thirds','4 qualify'],['Frequency','Every 4 years']],
+    ux_implications:['Same structural requirements as UEFA Euro and AFCON — all three share the same "6 groups of 4 + best thirds" model.'],
+    edge_cases:['The 2027 edition is expanding to 32 teams — team count is not fixed across all editions.'],
+  },
+  /* ───── GLOBAL ───── */
+  {
+    id:'world-cup', emoji:'🌍', name:'FIFA World Cup', short:'World Cup',
+    organizer:'FIFA', gov:'FIFA', confederation:'Global', region:'Global', country:'',
+    category:'global_nat', format:'group_knockout', tier:'global_premium',
+    participant:'national_team', teams:48, season:'Jun – Jul', season_type:'multi_year',
+    standings:true, groups:true, bracket:true, playoffs:false, promo_rel:false, two_legs:false,
+    modules:['group_standings','bracket','penalty_display','awards'],
+    description:'The world\'s largest football competition. From 2026: 48 nations in 12 groups of 4. Top 2 per group + 8 best third-placed teams (32 total) advance to a new Round of 32. Single-leg knockout throughout. Played in the host nation(s) over ~1 month.',
+    key_facts:[['Teams','48 (from 2026)'],['Groups','12 groups of 4'],['Advance','Top 2 + 8 best thirds = 32 teams'],['KO Rounds','R32→R16→QF→SF→3rd/Final'],['Host','USA, Canada, Mexico (2026)'],['Frequency','Every 4 years']],
+    ux_implications:[
+      'From 2026: "best third-placed teams" calculation involves 12 groups and 8 qualifying — a significant ranking table.',
+      'A new Round of 32 phase was added in 2026 — historical bracket structure is different from pre-2026 editions.',
+      'Third-place play-off IS included — unlike UEFA Euro.',
+      'Season label is the year only (e.g. "2026 FIFA World Cup") — not split-year.',
+      'National team player data model required: caps, international career goals, tournament history.',
+    ],
+    edge_cases:[
+      'Best-third ranking in 12-group format: 12 thirds exist, 8 qualify — requires a separate display table.',
+      'The 2026 bracket seeding for the Round of 32 depends on which groups the best-third teams came from — this affects bracket structure.',
+      'Host nation(s) automatically qualify — their "qualification story" is different from all other nations.',
+      'VAR with semi-automated offside: positional data events generated, not available in older editions.',
+    ],
+  },
+  {
+    id:'wc-qualifiers', emoji:'🌐', name:'FIFA World Cup Qualifiers', short:'WC Qualifiers',
+    organizer:'FIFA / Confederations', gov:'FIFA', confederation:'Global', region:'Global', country:'',
+    category:'qualifier', format:'group_knockout', tier:'global_premium',
+    participant:'national_team', teams:210, season:'Mar 2023 – Mar 2026', season_type:'multi_year',
+    standings:true, groups:true, bracket:true, playoffs:true, promo_rel:false, two_legs:true,
+    modules:['group_standings','standings','phase_nav','bracket','two_leg_aggregate','leg_context','penalty_display'],
+    description:'Six parallel qualification campaigns (one per confederation), each with its own format, feeding into the FIFA World Cup. CONMEBOL: single round robin of 10 nations, 18 matchdays. UEFA: 10 groups + Nations League play-off path. AFC: 3 rounds of groups + inter-confederation play-offs. Matches are clustered in international windows.',
+    key_facts:[['Nations','~210 attempting to qualify'],['Confederations','6 (each has own format)'],['Duration','≈ 2.5 years'],['Cadence','International windows (3 matches per window)'],['Inter-Conf Play-offs','Yes (links confederations)']],
+    ux_implications:[
+      'Six different qualification formats must all be supported and navigable under a unified "World Cup Qualifiers" umbrella.',
+      'Each confederation has its own group structure, number of rounds, and qualification paths.',
+      'Inter-confederation play-offs link different qualifying systems — a team from AFC vs a team from CONMEBOL.',
+      'Match cadence is window-based — not weekly. Fixtures appear in clusters of 3 matches per international window.',
+    ],
+    edge_cases:[
+      'CONMEBOL Qualifiers: 10 nations play each other home-and-away, 18 matchdays over 2+ years — a single, very long league table.',
+      'UEFA Qualifiers: Nations League results create an additional play-off path for nations who didn\'t qualify via groups.',
+      'A nation can win their qualifying group and still not qualify directly if inter-confederation play-offs reduce their slot.',
+    ],
+  },
+  {
+    id:'club-world-cup', emoji:'🌏', name:'FIFA Club World Cup', short:'Club World Cup',
+    organizer:'FIFA', gov:'FIFA', confederation:'Global', region:'Global', country:'',
+    category:'global_club', format:'group_knockout', tier:'global_premium',
+    participant:'club', teams:32, season:'Jun – Jul 2025', season_type:'multi_year',
+    standings:true, groups:true, bracket:true, playoffs:false, promo_rel:false, two_legs:false,
+    modules:['group_standings','bracket','penalty_display','awards'],
+    description:'Expanded to 32 clubs from 2025, held every 4 years. 8 groups of 4 (single round robin), then single-leg knockout rounds. Clubs qualify via confederation championships or FIFA ranking. First edition of this format: June–July 2025 in the USA.',
+    key_facts:[['Teams','32'],['Groups','8 groups of 4'],['KO Format','Single-leg'],['Host','USA (2025)'],['Frequency','Every 4 years (new format)'],['Qualification','Confederation champions + ranked clubs']],
+    ux_implications:[
+      'A global club competition: teams from all 6 confederations compete together.',
+      'Standard group + single-leg KO model — same structural requirements as the World Cup.',
+      'Clubs may qualify via routes that span years (e.g., winning the 2021 Champions League gives a 2025 spot).',
+    ],
+    edge_cases:[
+      'Scheduling conflict with domestic seasons: held June–July while some leagues are mid-season (Southern Hemisphere) or pre-season (Northern Hemisphere).',
+      'Host nation automatic slot(s) — similar to World Cup host automatic qualification.',
+    ],
+  },
+  /* ───── REGIONAL ───── */
+  {
+    id:'camp-paulista', emoji:'🇧🇷', name:'Campeonato Paulista', short:'Camp. Paulista',
+    organizer:'FPF (Federação Paulista de Futebol)', gov:'Regional Federation', confederation:'CONMEBOL', region:'South America', country:'Brazil',
+    category:'regional', format:'group_knockout', tier:'sub_national',
+    participant:'club', teams:16, season:'Jan – Apr', season_type:'calendar_year',
+    standings:true, groups:true, bracket:true, playoffs:false, promo_rel:true, two_legs:false,
+    modules:['group_standings','bracket','promo_rel','penalty_display'],
+    description:'São Paulo state championship. One of 27 Brazilian state competitions. 16 clubs in 4 groups of 4, then knockout rounds. Runs January–April, before the national Brasileirão season. São Paulo-based clubs (Corinthians, Palmeiras, Santos, São Paulo FC) treat this as a meaningful competition.',
+    key_facts:[['Teams','16'],['Groups','4 of 4'],['Season','Jan – Apr'],['Level','State / Sub-national'],['Part of','27 separate state champs']],
+    ux_implications:[
+      'One of 27 parallel state competitions — if the platform covers Brazilian football, all 27 exist simultaneously.',
+      'These competitions run concurrently with Copa Libertadores preliminary rounds — same clubs, multiple competitions in January.',
+      'Sub-national level: lower data quality, fewer official data feeds, likely no player tracking data.',
+    ],
+    edge_cases:[
+      'The Campeonato Paulista has its own qualification slots for Copa do Brasil.',
+      '27 state competitions with 27 different formats — some use leagues, some use groups, some use pure knockout. Each is its own configuration.',
+    ],
+  },
+  {
+    id:'j1-league', emoji:'🇯🇵', name:'J1 League', short:'J1 League',
+    organizer:'Japan Football Association / J.League', gov:'League Body', confederation:'AFC', region:'Asia', country:'Japan',
+    category:'domestic_league', format:'league', tier:'national',
+    participant:'club', teams:18, season:'Feb – Dec', season_type:'calendar_year',
+    standings:true, groups:false, bracket:false, playoffs:false, promo_rel:true, two_legs:false,
+    modules:['standings','promo_rel','continental_zones','penalty_display'],
+    description:'Japan\'s top football division. 18 clubs, 34 matchdays. Calendar-year season. Top clubs qualify for the AFC Champions League Elite. Standard double round robin format.',
+    key_facts:[['Teams','18'],['Matchdays','34'],['Season','Feb – Dec'],['Continental','AFC CL Elite spots']],
+    ux_implications:['Calendar-year season — single-year label. Otherwise structurally identical to Bundesliga.'],
+    edge_cases:['Player name order: Japanese convention is family name first. Display must respect locale settings.'],
+  },
+];
+
+/* ═══════════════════════════════════════════════════════════
+   FORMAT REFERENCE DATA
+═══════════════════════════════════════════════════════════ */
+const FORMATS = [
+  {
+    id:'league',
+    label:'Regular League',
+    icon:'📊',
+    subtitle:'Double Round Robin — the global standard for domestic football',
+    badge_class:'bf-league',
+    diagram:`SEASON START
+    │
+    ├─ Matchday 1
+    ├─ Matchday 2
+    ├─ ···
+    └─ Matchday N (Final)
+              │
+         FINAL STANDINGS
+              │
+    ┌─────────┼─────────┬──────────────┐
+ Champion  Cont. Spots  Rel. Play-off  Relegated
+  (1st)    (2nd–Nth)   (17th)         (18th–20th)`,
+    props:[
+      ['Produces Standings','✓ Yes'],['Produces Bracket','✗ No'],
+      ['Has Groups','✗ No'],['Has Playoffs','✗ No'],
+      ['Leg Structure','Home & Away (each pair plays twice)'],['Champion Determined By','Final league position'],
+      ['Tiebreaker','GD → Goals Scored → H2H (competition-specific)'],['Duration','8–10 months'],
+    ],
+    pros:['Maximum fairness — largest sample size','Home & away symmetry built in','Rich fixture calendar for broadcast','Simple to understand and follow'],
+    cons:['Title can be mathematically decided before season ends','No single dramatic final event','Long duration (34–38 matchdays)','Does not fit compressed time windows'],
+    examples:['Premier League','La Liga','Bundesliga','Serie A','Ligue 1','Brasileirão','J1 League'],
+  },
+  {
+    id:'split_league',
+    label:'Apertura / Clausura',
+    icon:'✂️',
+    subtitle:'Split season — two independent tournaments per calendar year',
+    badge_class:'bf-split_league',
+    diagram:`CALENDAR YEAR
+│
+├─ APERTURA (Opening Tournament)
+│    ├─ Regular Phase (Round Robin)
+│    │       │
+│    │  STANDINGS
+│    │       │
+│    └─ PLAYOFFS / LIGUILLA
+│           ├─ Quarterfinals [Two legs]
+│           ├─ Semifinals   [Two legs]
+│           └─ Final        [Two legs]
+│                   │
+│           APERTURA CHAMPION ◄──────── separate annual award
+│
+└─ CLAUSURA (Closing Tournament)
+     ├─ Regular Phase (Round Robin)
+     └─ PLAYOFFS / LIGUILLA
+             └─ CLAUSURA CHAMPION ◄──── separate annual award
+
+Annual aggregate table ──► used for relegation (independent of either champion)`,
+    props:[
+      ['Produces Standings','✓ Yes (per tournament)'],['Produces Bracket','✓ Yes (playoffs)'],
+      ['Has Groups','✗ No'],['Champions Per Year','2'],
+      ['Annual Table','Yes (for relegation)'],['Leg Structure','Two-leg playoffs'],
+      ['Duration','6 months per tournament'],['Region','Latin America'],
+    ],
+    pros:['Two championship events per year = more broadcast moments','Shorter, more intense tournaments','Aligns with international window calendar','Allows mid-year squad recalibration'],
+    cons:['Two champions per year confuses international audiences','Relegation via annual table is complex to explain','Regular season "winner" is not the champion','Historical cross-season comparisons are difficult'],
+    examples:['Liga MX (Mexico)','Colombian Liga BetPlay','Peruvian Liga 1','Central American leagues'],
+  },
+  {
+    id:'league_playoff',
+    label:'League + Playoffs',
+    icon:'🎯',
+    subtitle:'Regular season determines seeding; playoffs determine the champion',
+    badge_class:'bf-league_playoff',
+    diagram:`REGULAR SEASON (Round Robin / Unbalanced Schedule)
+              │
+         FINAL STANDINGS
+              │
+    Top N teams qualify for playoffs
+              │
+    ┌─────────────────────────────────┐
+    │         PLAYOFF BRACKET         │
+    │  (higher seed hosts each round) │
+    │                                 │
+    │  Round 1 ──► Quarters ──► Semis │
+    │                    │            │
+    │                  FINAL          │
+    │                    │            │
+    │               CHAMPION          │
+    └─────────────────────────────────┘
+
+Supporters' Shield ──► Best regular season record (separate award)`,
+    props:[
+      ['Produces Standings','✓ Yes (regular season)'],['Produces Bracket','✓ Yes (playoffs)'],
+      ['Regular Season Decides','Seeding, home field, qualification'],['Championship Decided By','Playoff winner'],
+      ['Home Field','Higher seed (typically)'],['Region','North America, Asia-Pacific'],
+      ['Leg Structure','Single-leg (MLS) or two-leg series'],['Duration','10–11 months total'],
+    ],
+    pros:['Creates high-drama playoff events','Regular season still matters (seeding/home field)','Familiar in North American market','Compresses title race into shorter window'],
+    cons:['Best regular season team may not become champion','Playoff elimination by lower-ranked team feels unfair to many','Complex scheduling with home-field-based venues','European audiences unfamiliar with the model'],
+    examples:['MLS (USA/Canada)','K League 1 (South Korea)','A-League (Australia)','Liga MX Liguilla'],
+  },
+  {
+    id:'group_knockout',
+    label:'Group Stage + Knockout',
+    icon:'🏆',
+    subtitle:'Groups guarantee multiple matches; knockout decides the winner',
+    badge_class:'bf-group_knockout',
+    diagram:`DRAW / SEEDING
+        │
+   ┌────┴─────────────────────┐
+   GROUP A  GROUP B  GROUP C  ···  GROUP N
+   (Round Robin within each group)
+        │
+   Top N per group advance
+   [+ Best thirds if applicable]
+        │
+   KNOCKOUT BRACKET
+        │
+   ┌────┴──────────────────────────────────┐
+   │  Round of 32 / 16                     │
+   │         │                             │
+   │  Quarterfinals                        │
+   │         │                             │
+   │  Semifinals                           │
+   │         │                             │
+   │  [Third-place play-off]  ◄── optional │
+   │         │                             │
+   │       FINAL                           │
+   │         │                             │
+   │     CHAMPION                          │
+   └───────────────────────────────────────┘`,
+    props:[
+      ['Produces Standings','✓ Yes (per group)'],['Produces Bracket','✓ Yes'],
+      ['Guaranteed Matches','Minimum group stage matches per team'],['KO Leg Structure','Single-leg (international) or Two-leg (club)'],
+      ['Third-Place Match','Optional (FIFA WC: Yes, UEFA Euro: No)'],['Duration','3–5 weeks (international), 9 months (club)'],
+      ['Groups','Typically 3–8 groups of 3–6 teams'],['Tiebreaker','Best thirds calculation if applicable'],
+    ],
+    pros:['Every team plays multiple matches guaranteed','Familiar and globally understood format','Natural narrative arcs per group','Seeding manages competitive balance'],
+    cons:['"Best third" rules are complex to calculate and explain','Final group matchday requires simultaneous kickoffs','Strong team can be eliminated by an off day','Large fields require many groups and venues'],
+    examples:['FIFA World Cup','UEFA Euro','Copa América','AFCON','Copa Libertadores','AFC Asian Cup','CAF Champions League'],
+  },
+  {
+    id:'league_phase_knockout',
+    label:'League Phase + Knockout',
+    icon:'📡',
+    subtitle:'Swiss-style unified table instead of groups — every match has table stakes',
+    badge_class:'bf-league_phase_knockout',
+    diagram:`LEAGUE PHASE
+36 teams — each plays 8 matches vs different opponents
+(Opponents selected by seeding pot draw)
+Full single standings table — no group labels
+              │
+   ┌──────────┼────────────────────────┐
+   │          │                        │
+Pos 1–8    Pos 9–24               Pos 25–36
+Auto R16   PLAY-OFF ROUND         ELIMINATED
+              │
+     [Two legs per tie]
+              │
+         ROUND OF 16
+         [Two legs]
+              │
+       QUARTERFINALS
+       [Two legs]
+              │
+        SEMIFINALS
+        [Two legs]
+              │
+           FINAL
+    [Single match, neutral venue]
+              │
+          CHAMPION`,
+    props:[
+      ['Produces Standings','✓ Yes (single unified table)'],['Has Groups','✗ No groups'],
+      ['Bracket','✓ Yes (from play-off round)'],['Intermediate Round','Play-off for positions 9–24'],
+      ['League Phase Matches','8 per team (not full round robin)'],['KO Legs','Two-leg (except Final)'],
+      ['Used By','UEFA CL, EL, ECL from 2024–25; AFC CL Elite'],['Fixture Symmetry','Asymmetric (different opponents per team)'],
+    ],
+    pros:['No dead rubbers — every match affects the same table','More matches per team vs group stage','Creates a single dramatic standings race','Flexible opponent allocation by seeding pot'],
+    cons:['Harder for casual fans to follow (no group labels)','Standings comparisons are indirect (different opponents)','Intermediate play-off round adds complexity','Bracket is partially unknown until play-off resolves'],
+    examples:['UEFA Champions League (2024+)','UEFA Europa League (2024+)','UEFA Conference League (2024+)','AFC Champions League Elite'],
+  },
+  {
+    id:'single_elimination',
+    label:'Single Elimination',
+    icon:'⚡',
+    subtitle:'One loss and you\'re out — maximum drama, minimum matches',
+    badge_class:'bf-single_elimination',
+    diagram:`FIELD ENTRY
+(All teams enter at same or different rounds)
+        │
+   Round of 128 (or fewer)
+        │  one loss = eliminated
+   Round of 64
+        │
+   Round of 32
+        │
+   Round of 16
+        │
+   Quarterfinals
+        │
+   Semifinals
+        │
+[Third-place play-off]  ◄── optional
+        │
+     FINAL
+(Neutral venue or home of higher seed)
+        │
+     CHAMPION`,
+    props:[
+      ['Produces Standings','✗ No'],['Produces Bracket','✓ Yes'],
+      ['Has Groups','✗ No'],['Match Per Round','1 per pairing'],
+      ['Tiebreaker','Extra time then penalties'],['Field Size','Any (64, 700+, etc.)'],
+      ['Open Entry','Often yes — amateur clubs can enter'],['Duration','Variable (2–8 months for multi-round cups)'],
+    ],
+    pros:['Pure drama — every match is decisive','Allows very large fields (FA Cup: 700+ teams)','Simple and universally understood','Lower-ranked teams can cause major upsets'],
+    cons:['High variance — strong team can exit early on a bad day','No aggregate safety net','Few guaranteed matches per team','Revenue risk: fewer matches if eliminated early'],
+    examples:['FA Cup (England)','DFB-Pokal (Germany)','Copa del Rey (Spain)','Coupe de France','US Open Cup','FIFA World Cup knockout rounds'],
+  },
+  {
+    id:'two_leg_knockout',
+    label:'Two-Leg Knockout',
+    icon:'↔️',
+    subtitle:'Each tie played home & away — aggregate score decides who advances',
+    badge_class:'bf-two_leg_knockout',
+    diagram:`FIRST LEG
+Team A (home)  vs  Team B (away)
+Result: e.g. 2–1
+               │
+          SECOND LEG
+Team B (home)  vs  Team A (away)
+Result: e.g. 1–1
+               │
+    AGGREGATE: Team A 3–2 Team B
+               │
+         Team A ADVANCES
+
+─── If aggregate is level after 90 min of Leg 2 ───
+
+[Away goals rule — if still active]
+  └─ Team with more away goals advances
+
+[If away goals abolished or N/A]
+  └─ EXTRA TIME (2 × 15 min)
+          │
+   If still level:
+  └─ PENALTY SHOOTOUT
+          │
+       WINNER`,
+    props:[
+      ['Produces Standings','✗ No'],['Produces Bracket','✓ Yes'],
+      ['Matches per Pairing','2 (one per home)'],['Tiebreaker','Away goals (some) → ET → Penalties'],
+      ['Away Goals (UEFA)','Abolished 2021'],['Away Goals (CONMEBOL)','Abolished 2023'],
+      ['Final Format','Often single-leg neutral (UCL, Libertadores)'],['Duration','2–3 weeks per round'],
+    ],
+    pros:['Reduces luck of single match','Home advantage shared symmetrically','Creates dramatic comeback narratives','Two revenue-generating matches per tie'],
+    cons:['Away goals rule (where active) confuses casual fans','Schedule demands are heavy (two fixtures per round)','Final sometimes switched to single-leg for commercial reasons','Aggregate display adds UI complexity'],
+    examples:['All UEFA CL/EL/ECL knockout rounds (except Final)','Copa Libertadores all KO rounds (except Final since 2019)','Copa do Brasil (all rounds including Final)','CONCACAF Champions Cup','World Cup qualifier inter-confederation play-offs'],
+  },
+];
+
+/* ═══════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════ */
+let state = {
+  tab: 'competitions',
+  view: 'table',
+  search: '',
+  selected: null,
+  sort: { col: 'name', dir: 1 },
+  filters: {
+    organizer: '', confederation: '', region: '', country: '',
+    category: '', format: '', tier: '',
+    standings: false, bracket: false, groups: false, playoffs: false,
+  },
+};
+
+/* ═══════════════════════════════════════════════════════════
+   FILTER LOGIC
+═══════════════════════════════════════════════════════════ */
+function applyFilters(list) {
+  const { filters, search } = state;
+  return list.filter(c => {
+    if (search) {
+      const q = search.toLowerCase();
+      if (!c.name.toLowerCase().includes(q) && !c.organizer.toLowerCase().includes(q) && !(c.country||'').toLowerCase().includes(q)) return false;
+    }
+    if (filters.organizer && c.gov !== filters.organizer) return false;
+    if (filters.confederation && c.confederation !== filters.confederation) return false;
+    if (filters.region && c.region !== filters.region) return false;
+    if (filters.country && c.country !== filters.country) return false;
+    if (filters.category && c.category !== filters.category) return false;
+    if (filters.format && c.format !== filters.format) return false;
+    if (filters.tier && c.tier !== filters.tier) return false;
+    if (filters.standings && !c.standings) return false;
+    if (filters.bracket && !c.bracket) return false;
+    if (filters.groups && !c.groups) return false;
+    if (filters.playoffs && !c.playoffs) return false;
+    return true;
+  });
+}
+
+function getOptions(field, list) {
+  return [...new Set(list.map(c => c[field]).filter(Boolean))].sort();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RENDER HELPERS
+═══════════════════════════════════════════════════════════ */
+function badge(cls, txt) {
+  return `<span class="badge ${cls}">${txt}</span>`;
+}
+function formatBadge(f) {
+  return badge(`bf-${f}`, FORMAT_LABELS[f] || f);
+}
+function tierBadge(t) {
+  return badge(`bt-${t}`, TIER_LABELS[t] || t);
+}
+function catBadge(c) {
+  return badge('bc', CAT_LABELS[c] || c);
+}
+function boolDot(v) {
+  return `<span class="bool-dot ${v?'bool-y':'bool-n'}" title="${v?'Yes':'No'}"></span>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RENDER SIDEBAR
+═══════════════════════════════════════════════════════════ */
+function renderSidebar(filtered) {
+  const all = COMPETITIONS;
+  const sel = (field, label, opts) => `
+    <div class="f-section">
+      <label class="f-label">${label}</label>
+      <select class="f-select" onchange="setFilter('${field}',this.value)">
+        <option value="">All</option>
+        ${opts.map(o => `<option value="${o}" ${state.filters[field]===o?'selected':''}>${o}</option>`).join('')}
+      </select>
+    </div>`;
+
+  const chk = (field, label) => `
+    <div class="f-check">
+      <input type="checkbox" id="chk-${field}" ${state.filters[field]?'checked':''} onchange="setFilter('${field}',this.checked)">
+      <label for="chk-${field}">${label}</label>
+    </div>`;
+
+  return `
+    <div class="f-section" style="padding-bottom:4px">
+      <label class="f-label">Results</label>
+      <div style="font-size:11px;color:var(--text-3)">${filtered.length} of ${all.length} competitions</div>
+    </div>
+    <hr class="f-divider">
+    ${sel('organizer','Governing Body', getOptions('gov', all))}
+    ${sel('confederation','Confederation', getOptions('confederation', all))}
+    ${sel('region','Region', getOptions('region', all))}
+    ${sel('country','Country', getOptions('country', all).filter(Boolean))}
+    ${sel('category','Category', Object.keys(CAT_LABELS))}
+    ${sel('format','Format', Object.keys(FORMAT_LABELS))}
+    ${sel('tier','Audience Tier', Object.keys(TIER_LABELS))}
+    <hr class="f-divider">
+    <label class="f-label">Features</label>
+    <div class="f-checks">
+      ${chk('standings','Has Standings')}
+      ${chk('bracket','Has Bracket')}
+      ${chk('groups','Has Groups')}
+      ${chk('playoffs','Has Playoffs')}
+    </div>
+    <button class="f-reset" onclick="resetFilters()">Reset all filters</button>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RENDER TABLE
+═══════════════════════════════════════════════════════════ */
+function renderTable(list) {
+  if (!list.length) return `<div class="empty"><div class="empty-ico">🔍</div><div class="empty-txt">No competitions match the current filters.</div></div>`;
+  const cols = [
+    { key:'name', label:'Competition' },
+    { key:'gov', label:'Governing Body' },
+    { key:'confederation', label:'Confederation' },
+    { key:'country', label:'Country' },
+    { key:'category', label:'Category' },
+    { key:'format', label:'Format' },
+    { key:'tier', label:'Audience Tier' },
+    { key:'teams', label:'Teams' },
+    { key:'standings', label:'Standings' },
+    { key:'groups', label:'Groups' },
+    { key:'bracket', label:'Bracket' },
+    { key:'playoffs', label:'Playoffs' },
+  ];
+  const sorted = [...list].sort((a,b) => {
+    let av = a[state.sort.col], bv = b[state.sort.col];
+    if (typeof av === 'string') av = av.toLowerCase(); if (typeof bv === 'string') bv = bv.toLowerCase();
+    return av > bv ? state.sort.dir : av < bv ? -state.sort.dir : 0;
+  });
+  const th = c => `<th onclick="setSort('${c.key}')">${c.label} ${state.sort.col===c.key?(state.sort.dir>0?'↑':'↓'):''}</th>`;
+  const rows = sorted.map(c => `
+    <tr class="${state.selected===c.id?'sel':''}" onclick="selectComp('${c.id}')">
+      <td><div class="name-cell"><span class="row-emoji">${c.emoji}</span><div><div class="row-name">${c.name}</div><div class="row-sub">${c.country||c.region}</div></div></div></td>
+      <td style="color:var(--text-2)">${c.gov}</td>
+      <td>${c.confederation}</td>
+      <td style="color:var(--text-2)">${c.country||'—'}</td>
+      <td>${catBadge(c.category)}</td>
+      <td>${formatBadge(c.format)}</td>
+      <td>${tierBadge(c.tier)}</td>
+      <td style="color:var(--text-2);text-align:center">${c.teams||'—'}</td>
+      <td style="text-align:center">${boolDot(c.standings)}</td>
+      <td style="text-align:center">${boolDot(c.groups)}</td>
+      <td style="text-align:center">${boolDot(c.bracket)}</td>
+      <td style="text-align:center">${boolDot(c.playoffs)}</td>
+    </tr>`).join('');
+  return `<table class="comp-table"><thead><tr>${cols.map(th).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RENDER CARDS
+═══════════════════════════════════════════════════════════ */
+function renderCards(list) {
+  if (!list.length) return `<div class="empty"><div class="empty-ico">🔍</div><div class="empty-txt">No competitions match the current filters.</div></div>`;
+  return `<div class="cards-grid">${list.map(c => `
+    <div class="card ${state.selected===c.id?'sel':''}" onclick="selectComp('${c.id}')">
+      <div class="card-top">
+        <div class="card-ico">${c.emoji}</div>
+        <div><div class="card-name">${c.name}</div><div class="card-org">${c.organizer}</div></div>
+      </div>
+      <div class="card-badges">
+        ${formatBadge(c.format)} ${tierBadge(c.tier)} ${catBadge(c.category)}
+      </div>
+      <div class="card-meta">
+        <div class="card-mi"><b>Conf</b> ${c.confederation}</div>
+        ${c.country?`<div class="card-mi"><b>Country</b> ${c.country}</div>`:''}
+        <div class="card-mi"><b>Teams</b> ${c.teams||'—'}</div>
+        <div class="card-mi"><b>Season</b> ${c.season}</div>
+      </div>
+      <div class="card-mods">
+        ${c.modules.slice(0,4).map(m => `<span class="bm">${MODULES[m]?.label||m}</span>`).join('')}
+        ${c.modules.length>4?`<span class="bm">+${c.modules.length-4} more</span>`:''}
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RENDER DETAIL
+═══════════════════════════════════════════════════════════ */
+function renderDetail() {
+  if (!state.selected) return '';
+  const c = COMPETITIONS.find(x => x.id === state.selected);
+  if (!c) return '';
+  const modColors = { green:'var(--green)', blue:'var(--cyan)', orange:'var(--orange)', purple:'var(--purple)', red:'var(--red)', yellow:'var(--yellow)', cyan:'var(--cyan)' };
+  return `
+    <div class="d-hdr">
+      <div class="d-ico">${c.emoji}</div>
+      <div>
+        <div class="d-title">${c.name}</div>
+        <div class="d-org">${c.organizer}</div>
+      </div>
+      <button class="d-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="d-body">
+      <div class="d-sec">
+        <div class="d-badges">
+          ${formatBadge(c.format)} ${tierBadge(c.tier)} ${catBadge(c.category)}
+        </div>
+      </div>
+
+      <div class="d-sec">
+        <div class="d-sec-title">Overview</div>
+        <div class="d-desc">${c.description}</div>
+      </div>
+
+      <div class="d-sec">
+        <div class="d-sec-title">Key Facts</div>
+        <div class="d-grid">
+          ${(c.key_facts||[]).map(([l,v])=>`<div class="d-item"><div class="d-il">${l}</div><div class="d-iv">${v}</div></div>`).join('')}
+          <div class="d-item"><div class="d-il">Confederation</div><div class="d-iv">${c.confederation}</div></div>
+          <div class="d-item"><div class="d-il">Region</div><div class="d-iv">${c.region}</div></div>
+          ${c.country?`<div class="d-item"><div class="d-il">Country</div><div class="d-iv">${c.country}</div></div>`:''}
+          <div class="d-item"><div class="d-il">Participant</div><div class="d-iv">${c.participant==='club'?'Clubs':'National Teams'}</div></div>
+        </div>
+      </div>
+
+      <div class="d-sec">
+        <div class="d-sec-title">Required Stats App Modules</div>
+        <div class="d-mods">
+          ${c.modules.map(m => {
+            const mod = MODULES[m]; if (!mod) return '';
+            return `<div class="d-mod" title="${mod.desc}">
+              <div class="d-mod-dot" style="background:${mod.color}"></div>
+              <div class="d-mod-name">${mod.label}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="d-sec">
+        <div class="d-sec-title">UX Implications</div>
+        <div class="d-list">
+          ${(c.ux_implications||[]).map(u=>`<div class="d-li ux">${u}</div>`).join('')}
+        </div>
+      </div>
+
+      <div class="d-sec">
+        <div class="d-sec-title">Edge Cases & Gotchas</div>
+        <div class="d-list">
+          ${(c.edge_cases||[]).map(e=>`<div class="d-li edge">${e}</div>`).join('')}
+        </div>
+      </div>
+
+      <div class="d-sec">
+        <div class="d-sec-title">Feature Flags</div>
+        <div class="d-grid">
+          ${[['standings','Standings Table'],['groups','Groups'],['bracket','Bracket'],['playoffs','Playoffs'],['promo_rel','Promo / Relegation'],['two_legs','Two-Leg Ties']].map(([k,l])=>`
+            <div class="d-item">
+              <div class="d-il">${l}</div>
+              <div class="d-iv" style="color:${c[k]?'var(--green)':'var(--text-3)'}">${c[k]?'✓ Yes':'✗ No'}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RENDER FORMATS TAB
+═══════════════════════════════════════════════════════════ */
+function renderFormats() {
+  return `<div class="fmt-wrap"><div class="fmt-grid">${FORMATS.map(f => `
+    <div class="fmt-card">
+      <div class="fmt-hdr">
+        <div class="fmt-hdr-icon">${f.icon}</div>
+        <div>
+          <div class="fmt-hdr-title">${badge(`bf-${f.id}`, f.label)}</div>
+          <div class="fmt-hdr-sub" style="margin-top:5px">${f.subtitle}</div>
+        </div>
+      </div>
+      <div class="fmt-body">
+        <div class="fmt-diagram">${f.diagram}</div>
+        <div class="fmt-props">
+          ${f.props.map(([l,v])=>`<div><div class="fmt-pl">${l}</div><div class="fmt-pv">${v}</div></div>`).join('')}
+        </div>
+        <div class="fmt-pros-cons">
+          <div class="fmt-pc pros">
+            <div class="fmt-pc-title">Advantages</div>
+            <ul>${f.pros.map(p=>`<li>${p}</li>`).join('')}</ul>
+          </div>
+          <div class="fmt-pc cons">
+            <div class="fmt-pc-title">Challenges</div>
+            <ul>${f.cons.map(p=>`<li>${p}</li>`).join('')}</ul>
+          </div>
+        </div>
+        <div class="fmt-section-title">Real-World Examples</div>
+        <div class="fmt-examples">
+          ${f.examples.map(e=>`<span class="badge bc">${e}</span>`).join('')}
+        </div>
+      </div>
+    </div>`).join('')}</div></div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FULL RENDER
+═══════════════════════════════════════════════════════════ */
+function render() {
+  const filtered = applyFilters(COMPETITIONS);
+  const app = document.getElementById('app');
+
+  const competitionsTab = `
+    <aside class="sidebar" id="sidebar">${renderSidebar(filtered)}</aside>
+    <div class="main">
+      <div class="toolbar">
+        <div class="view-toggle">
+          <button class="v-btn ${state.view==='table'?'on':''}" onclick="setView('table')">⊞ Table</button>
+          <button class="v-btn ${state.view==='cards'?'on':''}" onclick="setView('cards')">⊟ Cards</button>
+        </div>
+        <input class="search" placeholder="Search competitions…" value="${state.search}" oninput="setSearch(this.value)">
+        <div class="toolbar-count">${filtered.length} competition${filtered.length!==1?'s':''}</div>
+      </div>
+      <div class="content" id="content">
+        ${state.view==='table' ? renderTable(filtered) : renderCards(filtered)}
+      </div>
+    </div>
+    <aside class="detail ${state.selected?'':'hidden'}" id="detail-panel">
+      ${renderDetail()}
+    </aside>`;
+
+  app.innerHTML = `
+    <header class="hdr">
+      <div class="hdr-logo">
+        <div class="hdr-icon">⚽</div>
+        <div>
+          <div class="hdr-title">Football Competition Explorer</div>
+          <div class="hdr-sub">Internal Reference Tool · Product / UX / Engineering</div>
+        </div>
+      </div>
+      <nav class="hdr-nav">
+        <button class="nav-btn ${state.tab==='competitions'?'on':''}" onclick="switchTab('competitions')">Competitions</button>
+        <button class="nav-btn ${state.tab==='formats'?'on':''}" onclick="switchTab('formats')">Format Types</button>
+      </nav>
+    </header>
+    <div class="body">
+      ${state.tab==='competitions'
+        ? competitionsTab
+        : `<div style="flex:1;overflow:hidden;display:flex;flex-direction:column">${renderFormats()}</div>`
+      }
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EVENTS
+═══════════════════════════════════════════════════════════ */
+function switchTab(tab) { state.tab = tab; state.selected = null; render(); }
+function setView(v) { state.view = v; render(); }
+function setSearch(v) { state.search = v; render(); }
+function setFilter(field, value) {
+  state.filters[field] = typeof value === 'boolean' ? value : value;
+  render();
+}
+function resetFilters() {
+  state.filters = { organizer:'',confederation:'',region:'',country:'',category:'',format:'',tier:'',standings:false,bracket:false,groups:false,playoffs:false };
+  state.search = '';
+  render();
+}
+function setSort(col) {
+  if (state.sort.col === col) state.sort.dir *= -1;
+  else state.sort = { col, dir: 1 };
+  render();
+}
+function selectComp(id) {
+  state.selected = state.selected === id ? null : id;
+  render();
+  if (state.selected) {
+    requestAnimationFrame(() => {
+      const panel = document.getElementById('detail-panel');
+      if (panel) panel.scrollTop = 0;
+    });
+  }
+}
+function closeDetail() { state.selected = null; render(); }
+
+/* ═══════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════ */
+render();
+</script>
+</body>
+</html>
