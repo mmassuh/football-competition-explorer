@@ -178,6 +178,29 @@ select,input{font-family:inherit;font-size:12px}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px;gap:10px;opacity:.5}
 .empty-ico{font-size:36px}
 .empty-txt{color:var(--text-3);font-size:13px}
+
+/* ── MAP VIEW ── */
+.map-wrap{display:flex;flex:1;overflow:hidden;min-height:0}
+.map-svg-area{flex:1;padding:14px;display:flex;flex-direction:column;gap:8px;overflow:hidden;min-width:0}
+.map-svg-area svg{width:100%;flex:1;display:block;max-height:calc(100vh - 160px)}
+.map-legend{display:flex;flex-wrap:wrap;gap:6px}
+.map-legend-chip{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:100px;border:1px solid;cursor:pointer;transition:all .15s;font-size:10px;font-weight:600}
+.map-right{width:320px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.map-right-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.map-comp-list{overflow-y:auto;flex:1}
+.map-comp-item{display:flex;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.map-comp-item:hover{background:var(--surface-2)}
+.map-comp-item.sel{background:var(--accent-dim)}
+.map-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:var(--text-3)}
+.map-region{cursor:pointer;transition:all .15s}
+.map-region:hover{filter:brightness(1.4)}
+.comp-dot{cursor:pointer;transition:all .15s}
+.comp-dot:hover{r:7}
+/* ── MINI-MAP ── */
+.minimap-wrap{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:6px}
+.minimap-legend{display:flex;align-items:center;gap:6px;padding:5px 2px 0}
+.minimap-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.minimap-label{font-size:11px;color:var(--text-2)}
 </style>
 </head>
 <body>
@@ -1108,6 +1131,68 @@ Result: e.g. 1–1
 ];
 
 /* ═══════════════════════════════════════════════════════════
+   MAP DATA
+═══════════════════════════════════════════════════════════ */
+// SVG viewBox 0 0 840 440 — approx Mercator projection
+// x = (lon + 180) * 2.333,  y = (90 - lat) * 2.444
+const REGION_PATHS = {
+  'North America': 'M 35,50 L 298,44 L 262,158 L 208,184 L 140,178 L 35,120 Z',
+  'South America': 'M 237,200 L 338,228 L 305,358 L 255,368 L 224,342 L 236,240 Z',
+  'Europe':        'M 393,70 L 510,44 L 520,100 L 508,156 L 408,170 L 384,130 Z',
+  'Africa':        'M 379,134 L 538,127 L 522,306 L 447,392 L 370,362 L 364,212 Z',
+  'Asia':          'M 510,44 L 758,29 L 772,182 L 682,212 L 582,196 L 522,132 L 510,44 Z',
+  'Oceania':       'M 648,248 L 840,248 L 840,340 L 648,340 Z',
+};
+
+const REGION_META = {
+  'North America': { conf:'CONCACAF', color:'#22c55e', dim:'#0b2418', lx:155, ly:135 },
+  'South America': { conf:'CONMEBOL', color:'#f59e0b', dim:'#2a1c02', lx:280, ly:300 },
+  'Europe':        { conf:'UEFA',     color:'#5468ff', dim:'#0a1238', lx:448, ly:108 },
+  'Africa':        { conf:'CAF',      color:'#f97316', dim:'#2a1002', lx:450, ly:260 },
+  'Asia':          { conf:'AFC',      color:'#a855f7', dim:'#180a38', lx:645, ly:128 },
+  'Oceania':       { conf:'OFC',      color:'#06b6d4', dim:'#032428', lx:744, ly:294 },
+};
+
+// Approximate map dot positions (SVG xy) per competition id
+const COMP_COORDS = {
+  'premier-league':     [420, 94],
+  'fa-cup':             [420, 94],
+  'scottish-prem':      [412, 80],
+  'la-liga':            [412, 121],
+  'copa-del-rey':       [408, 124],
+  'bundesliga':         [447, 102],
+  'dfb-pokal':          [447, 106],
+  'serie-a':            [442, 109],
+  'ligue-1':            [425, 100],
+  'ucl':                [465, 76],
+  'uel':                [472, 83],
+  'uecl':               [479, 90],
+  'euro':               [455, 68],
+  'nations-league':     [460, 74],
+  'uefa-super-cup':     [468, 80],
+  'copa-libertadores':  [310, 278],
+  'copa-sudamericana':  [316, 286],
+  'copa-america':       [303, 270],
+  'brasileirao':        [312, 272],
+  'copa-do-brasil':     [318, 278],
+  'camp-paulista':      [312, 278],
+  'liga-arg':           [284, 305],
+  'liga-colombia':      [246, 209],
+  'mls':                [175, 140],
+  'liga-mx':            [189, 172],
+  'gold-cup':           [183, 155],
+  'concacaf-champions': [185, 162],
+  'afc-asian-cup':      [660, 212],
+  'afc-cl-elite':       [668, 180],
+  'j1-league':          [746, 133],
+  'afcon':              [490, 224],
+  'caf-cl':             [498, 232],
+  'world-cup':          null,
+  'wc-qualifiers':      null,
+  'club-world-cup':     null,
+};
+
+/* ═══════════════════════════════════════════════════════════
    STATE
 ═══════════════════════════════════════════════════════════ */
 let state = {
@@ -1115,6 +1200,7 @@ let state = {
   view: 'table',
   search: '',
   selected: null,
+  mapRegion: null,
   sort: { col: 'name', dir: 1 },
   filters: {
     organizer: '', confederation: '', region: '', country: '',
@@ -1348,6 +1434,8 @@ function renderDetail() {
         </div>
       </div>
 
+      ${renderMiniMap(c.region)}
+
       <div class="d-sec">
         <div class="d-sec-title">Required Stats App Modules</div>
         <div class="d-mods">
@@ -1385,6 +1473,137 @@ function renderDetail() {
             </div>`).join('')}
         </div>
       </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MINI-MAP (used in detail panel)
+═══════════════════════════════════════════════════════════ */
+function renderMiniMap(region) {
+  const meta = REGION_META[region];
+  if (!meta) return '';
+  const paths = Object.entries(REGION_PATHS).map(([r, p]) => {
+    const m = REGION_META[r];
+    const sel = r === region;
+    return `<path d="${p}" fill="${sel ? m.dim : '#08090f'}" stroke="${sel ? m.color : '#181c2c'}" stroke-width="${sel ? 1.8 : 0.6}" opacity="${sel ? 1 : 0.5}"/>`;
+  }).join('');
+  return `
+    <div class="d-sec">
+      <div class="d-sec-title">Geographic Location</div>
+      <div class="minimap-wrap">
+        <svg viewBox="0 0 840 440" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:4px">
+          <rect width="840" height="440" fill="#050710" rx="4"/>
+          ${paths}
+          <text x="${meta.lx}" y="${meta.ly}" fill="${meta.color}" font-size="16" font-weight="700" text-anchor="middle" font-family="-apple-system,sans-serif" opacity="0.9" style="pointer-events:none">${region}</text>
+        </svg>
+        <div class="minimap-legend">
+          <div class="minimap-dot" style="background:${meta.color}"></div>
+          <span class="minimap-label">${meta.conf} · ${region}</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MAP VIEW
+═══════════════════════════════════════════════════════════ */
+function renderMapView(filtered) {
+  const mr = state.mapRegion;
+  const regionCounts = {};
+  COMPETITIONS.forEach(c => { regionCounts[c.region] = (regionCounts[c.region] || 0) + 1; });
+
+  const regionPaths = Object.entries(REGION_PATHS).map(([region, path]) => {
+    const m = REGION_META[region];
+    const sel = mr === region;
+    return `<path d="${path}" fill="${sel ? m.dim : '#0d1020'}" stroke="${m.color}"
+      stroke-width="${sel ? 2.5 : 1}" opacity="${sel ? 1 : mr ? 0.45 : 0.82}"
+      class="map-region${sel ? ' selected' : ''}" data-region="${region}"
+      onclick="setMapRegion('${region}')">
+      <title>${region} (${regionCounts[region] || 0} competitions)</title>
+    </path>`;
+  }).join('');
+
+  const regionLabels = Object.entries(REGION_META).map(([region, m]) => {
+    const sel = mr === region;
+    const count = regionCounts[region] || 0;
+    return `
+      <text x="${m.lx}" y="${m.ly - 10}" fill="${m.color}" font-size="${sel ? 13 : 11}"
+            font-weight="700" text-anchor="middle" font-family="-apple-system,sans-serif"
+            opacity="${sel ? 1 : 0.7}" style="pointer-events:none">${m.conf}</text>
+      <text x="${m.lx}" y="${m.ly + 5}" fill="${m.color}" font-size="9"
+            text-anchor="middle" font-family="-apple-system,sans-serif"
+            opacity="${sel ? 0.9 : 0.5}" style="pointer-events:none">${count} comp${count!==1?'s':''}</text>`;
+  }).join('');
+
+  const compDots = filtered.map(c => {
+    const xy = COMP_COORDS[c.id];
+    if (!xy) return '';
+    const m = REGION_META[c.region];
+    const color = m ? m.color : '#9ca3af';
+    const sel = state.selected === c.id;
+    return `<circle cx="${xy[0]}" cy="${xy[1]}" r="${sel ? 7 : 4.5}"
+      fill="${sel ? '#fff' : color}" stroke="${sel ? color : 'rgba(0,0,0,0.6)'}"
+      stroke-width="${sel ? 2.5 : 1}" class="comp-dot"
+      onclick="selectComp('${c.id}')"><title>${c.name}</title></circle>`;
+  }).join('');
+
+  const legend = Object.entries(REGION_META).map(([r, m]) => {
+    const sel = mr === r;
+    return `<div class="map-legend-chip"
+      style="border-color:${sel ? m.color : m.color+'50'};background:${sel ? m.dim : 'transparent'};color:${m.color}"
+      onclick="setMapRegion('${r}')">
+      <div style="width:7px;height:7px;border-radius:50%;background:${m.color};flex-shrink:0"></div>${m.conf}
+    </div>`;
+  }).join('') + `<div class="map-legend-chip" style="border-color:var(--border);color:var(--text-3)" onclick="setMapRegion(null)">Show all</div>`;
+
+  const regionComps = mr ? filtered.filter(c => c.region === mr) : [];
+
+  let rightPanel;
+  if (state.selected) {
+    rightPanel = renderDetail();
+  } else if (mr) {
+    rightPanel = `
+      <div class="map-right-hdr">
+        <div class="minimap-dot" style="background:${REGION_META[mr].color}"></div>
+        <span style="font-weight:600;font-size:13px">${mr}</span>
+        <span style="color:var(--text-3);font-size:11px">${regionComps.length} competition${regionComps.length!==1?'s':''}</span>
+        <button onclick="setMapRegion(null)" style="margin-left:auto;background:none;border:none;color:var(--text-3);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px">✕</button>
+      </div>
+      <div class="map-comp-list">
+        ${regionComps.length ? regionComps.map(c => `
+          <div class="map-comp-item${state.selected===c.id?' sel':''}" onclick="selectComp('${c.id}')">
+            <span style="font-size:20px;width:26px;text-align:center;flex-shrink:0">${c.emoji}</span>
+            <div style="min-width:0">
+              <div style="font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
+              <div style="font-size:10px;color:var(--text-3)">${c.country || c.region}</div>
+            </div>
+            <div style="margin-left:auto;flex-shrink:0">${formatBadge(c.format)}</div>
+          </div>`).join('')
+          : `<div style="padding:40px;text-align:center;color:var(--text-3);font-size:12px">No competitions match current filters</div>`}
+      </div>`;
+  } else {
+    rightPanel = `
+      <div class="map-empty">
+        <div style="font-size:36px">🗺️</div>
+        <div style="font-size:13px;font-weight:500">Click a region to explore</div>
+        <div style="font-size:11px;opacity:.6">${filtered.length} competitions in database</div>
+      </div>`;
+  }
+
+  return `
+    <div class="map-wrap">
+      <div class="map-svg-area">
+        <svg viewBox="0 0 840 440" xmlns="http://www.w3.org/2000/svg">
+          <rect width="840" height="440" fill="#050710" rx="6"/>
+          <line x1="0" y1="220" x2="840" y2="220" stroke="#0d1020" stroke-width="1"/>
+          <line x1="420" y1="0" x2="420" y2="440" stroke="#0d1020" stroke-width="1"/>
+          ${regionPaths}
+          ${regionLabels}
+          ${compDots}
+        </svg>
+        <div class="map-legend">${legend}</div>
+      </div>
+      <div class="map-right">${rightPanel}</div>
     </div>`;
 }
 
@@ -1431,13 +1650,27 @@ function render() {
   const filtered = applyFilters(COMPETITIONS);
   const app = document.getElementById('app');
 
-  const competitionsTab = `
+  const isMap = state.view === 'map';
+  const competitionsTab = isMap ? `
+    <div class="main" style="display:flex;flex-direction:column;overflow:hidden;min-height:0">
+      <div class="toolbar">
+        <div class="view-toggle">
+          <button class="v-btn" onclick="setView('table')">⊞ Table</button>
+          <button class="v-btn" onclick="setView('cards')">⊟ Cards</button>
+          <button class="v-btn on" onclick="setView('map')">🗺 Map</button>
+        </div>
+        <input class="search" placeholder="Search competitions…" value="${state.search}" oninput="setSearch(this.value)">
+        <div class="toolbar-count">${filtered.length} competition${filtered.length!==1?'s':''}</div>
+      </div>
+      ${renderMapView(filtered)}
+    </div>` : `
     <aside class="sidebar" id="sidebar">${renderSidebar(filtered)}</aside>
     <div class="main">
       <div class="toolbar">
         <div class="view-toggle">
           <button class="v-btn ${state.view==='table'?'on':''}" onclick="setView('table')">⊞ Table</button>
           <button class="v-btn ${state.view==='cards'?'on':''}" onclick="setView('cards')">⊟ Cards</button>
+          <button class="v-btn" onclick="setView('map')">🗺 Map</button>
         </div>
         <input class="search" placeholder="Search competitions…" value="${state.search}" oninput="setSearch(this.value)">
         <div class="toolbar-count">${filtered.length} competition${filtered.length!==1?'s':''}</div>
@@ -1503,6 +1736,7 @@ function selectComp(id) {
   }
 }
 function closeDetail() { state.selected = null; render(); }
+function setMapRegion(region) { state.mapRegion = (region === state.mapRegion) ? null : region; state.selected = null; render(); }
 
 /* ═══════════════════════════════════════════════════════════
    INIT
