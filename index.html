@@ -1909,9 +1909,23 @@ async function loadWorldMap() {
     const topo = await res.json();
     const W = 840, H = 440;
 
-    const pt = ([lon, lat]) =>
-      `${((lon + 180) * W / 360).toFixed(1)},${((90 - lat) * H / 180).toFixed(1)}`;
-    const ring2d = ring => 'M ' + ring.map(pt).join(' L ') + ' Z';
+    // Project lon/lat → SVG xy
+    const toXY = ([lon, lat]) => [(lon + 180) * W / 360, (90 - lat) * H / 180];
+
+    // Build ring path, inserting M (move) instead of L (line) at anti-meridian crossings.
+    // Countries like Russia, Fiji, Kiribati cross ±180° and would otherwise produce
+    // a full-width horizontal streak with a naive "join all coords with L".
+    const ring2d = ring => {
+      let d = '', prev = null;
+      for (const coord of ring) {
+        const [x, y] = toXY(coord);
+        const xs = x.toFixed(1), ys = y.toFixed(1);
+        d += (!prev || Math.abs(x - prev) > W * 0.5) ? `M ${xs},${ys} ` : `L ${xs},${ys} `;
+        prev = x;
+      }
+      return d + 'Z ';
+    };
+
     const geom2path = g => {
       if (!g) return '';
       if (g.type === 'Polygon') return g.coordinates.map(ring2d).join('');
@@ -1927,7 +1941,7 @@ async function loadWorldMap() {
 
     // Internal country borders mesh
     const borderMesh = topojson.mesh(topo, topo.objects.countries, (a, b) => a !== b);
-    const line2d = coords => 'M ' + coords.map(pt).join(' L ');
+    const line2d = coords => 'M ' + coords.map(c => { const [x,y] = toXY(c); return `${x.toFixed(1)},${y.toFixed(1)}`; }).join(' L ');
     if (borderMesh.type === 'LineString') worldBorderPath = line2d(borderMesh.coordinates);
     else if (borderMesh.type === 'MultiLineString') worldBorderPath = borderMesh.coordinates.map(line2d).join(' ');
 
