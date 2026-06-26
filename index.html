@@ -1225,7 +1225,7 @@ const CONF_COUNTRIES = {
   710:'Africa',728:'Africa',729:'Africa',834:'Africa',768:'Africa',788:'Africa',
   800:'Africa',894:'Africa',716:'Africa',678:'Africa',690:'Africa',480:'Africa',
   // AFC – Asia (incl. Australia since 2006)
-  4:'Asia',36:'Asia',48:'Asia',50:'Asia',64:'Asia',96:'Asia',116:'Asia',
+  4:'Asia',48:'Asia',50:'Asia',64:'Asia',96:'Asia',116:'Asia',
   156:'Asia',344:'Asia',356:'Asia',360:'Asia',364:'Asia',368:'Asia',392:'Asia',
   400:'Asia',414:'Asia',417:'Asia',418:'Asia',422:'Asia',446:'Asia',458:'Asia',
   462:'Asia',496:'Asia',104:'Asia',524:'Asia',408:'Asia',512:'Asia',586:'Asia',
@@ -1233,7 +1233,7 @@ const CONF_COUNTRIES = {
   760:'Asia',762:'Asia',764:'Asia',784:'Asia',860:'Asia',704:'Asia',887:'Asia',
   626:'Asia',158:'Asia',
   // OFC – Oceania
-  242:'Oceania',554:'Oceania',598:'Oceania',882:'Oceania',90:'Oceania',
+  36:'Oceania',242:'Oceania',554:'Oceania',598:'Oceania',882:'Oceania',90:'Oceania',
   776:'Oceania',548:'Oceania',258:'Oceania',540:'Oceania',16:'Oceania',184:'Oceania',
 };
 
@@ -1311,7 +1311,7 @@ const REGION_META = {
   'Europe':        { conf:'UEFA',     color:'#5468ff', dim:'#0a1238', lx:448, ly:97  },
   'Africa':        { conf:'CAF',      color:'#f97316', dim:'#2a1002', lx:455, ly:240 },
   'Asia':          { conf:'AFC',      color:'#a855f7', dim:'#180a38', lx:660, ly:112 },
-  'Oceania':       { conf:'OFC',      color:'#06b6d4', dim:'#032428', lx:800, ly:320 },
+  'Oceania':       { conf:'OFC',      color:'#06b6d4', dim:'#032428', lx:728, ly:278 },
 };
 
 // Approximate map dot positions (SVG xy) per competition id
@@ -2020,7 +2020,7 @@ async function loadWorldMap() {
     // 36 Australia: AFC member since 2006 but geographically Oceania — including it in
     //    Asia overlay makes it overlap with OFC region visually
     // 242 Fiji / 296 Kiribati: straddle ±180° date line, fragments appear at map edges
-    const CONF_SKIP = new Set([643, 36, 242, 296, 581]);
+    const CONF_SKIP = new Set([643, 242, 296, 581]);
 
     // Merge countries by confederation → accurate region shapes
     const confPaths = {};
