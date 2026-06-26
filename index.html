@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Football Competition Explorer — Internal Reference</title>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 <style>
 :root {
   --bg: #0d0f1a; --surface: #141727; --surface-2: #1c2038; --surface-3: #242848;
@@ -1553,8 +1554,12 @@ function renderMiniMap(region) {
           <!-- subtle graticule -->
           ${[73,147,220,293,367].map(y=>`<line x1="0" y1="${y}" x2="840" y2="${y}" stroke="#0d1428" stroke-width="0.8"/>`).join('')}
           ${[140,280,420,560,700].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="440" stroke="#0d1428" stroke-width="0.8"/>`).join('')}
-          <!-- landmass silhouette -->
-          ${Object.entries(REGION_PATHS).map(([,p])=>`<path d="${p}" fill="#0c1122" stroke="#151d35" stroke-width="0.5"/>`).join('')}
+          <!-- landmass background -->
+          ${worldLoaded
+            ? `<path d="${worldGeoPath}" fill="#0d1220" stroke="none"/>
+               <path d="${worldBorderPath}" fill="none" stroke="#1a2440" stroke-width="0.5"/>`
+            : Object.entries(REGION_PATHS).map(([,p])=>`<path d="${p}" fill="#0c1122" stroke="#151d35" stroke-width="0.5"/>`).join('')
+          }
           <!-- highlighted paths -->
           ${paths}
           <text x="${meta.lx}" y="${meta.ly}" fill="${meta.color}" font-size="16" font-weight="700" text-anchor="middle" font-family="-apple-system,sans-serif" opacity="0.9" style="pointer-events:none">${region}</text>
@@ -1578,8 +1583,11 @@ function renderMapView(filtered) {
   const regionPaths = Object.entries(REGION_PATHS).map(([region, path]) => {
     const m = REGION_META[region];
     const sel = mr === region;
-    return `<path d="${path}" fill="${sel ? m.dim : '#0d1020'}" stroke="${m.color}"
-      stroke-width="${sel ? 2.5 : 1}" opacity="${sel ? 1 : mr ? 0.45 : 0.82}"
+    const fillOpacity = worldLoaded ? (sel ? 0.45 : mr ? 0.18 : 0.28) : (sel ? 1 : mr ? 0.45 : 0.82);
+    return `<path d="${path}"
+      fill="${sel ? m.dim : m.color}" fill-opacity="${fillOpacity}"
+      stroke="${m.color}" stroke-width="${sel ? 2 : 0.8}"
+      stroke-opacity="${sel ? 1 : mr ? 0.5 : 0.7}"
       class="map-region${sel ? ' selected' : ''}" data-region="${region}"
       onclick="setMapRegion('${region}')">
       <title>${region} (${regionCounts[region] || 0} competitions)</title>
@@ -1675,12 +1683,16 @@ function renderMapView(filtered) {
           <!-- Prime meridian -->
           <line x1="420" y1="0" x2="420" y2="440" stroke="#141c38" stroke-width="1"/>
 
-          <!-- Landmass silhouette (all regions, very faint, for geographic context) -->
-          ${Object.entries(REGION_PATHS).map(([,p]) =>
-            `<path d="${p}" fill="#0c1122" stroke="#151d35" stroke-width="0.5"/>`
-          ).join('')}
+          <!-- Background: real country geography or simplified fallback -->
+          ${worldLoaded
+            ? `<path d="${worldGeoPath}" fill="#0d1220" stroke="none"/>
+               <path d="${worldBorderPath}" fill="none" stroke="#1c2848" stroke-width="0.5"/>`
+            : Object.entries(REGION_PATHS).map(([,p]) =>
+                `<path d="${p}" fill="#0c1122" stroke="#151d35" stroke-width="0.5"/>`
+              ).join('')
+          }
 
-          <!-- Confederation region overlays -->
+          <!-- Confederation region overlays (semi-transparent so geography shows through) -->
           ${regionPaths}
           ${regionLabels}
           ${compDots}
@@ -1823,9 +1835,63 @@ function closeDetail() { state.selected = null; render(); }
 function setMapRegion(region) { state.mapRegion = (region === state.mapRegion) ? null : region; state.selected = null; render(); }
 
 /* ═══════════════════════════════════════════════════════════
+   WORLD MAP LOADER  (Natural Earth 110m via CDN)
+═══════════════════════════════════════════════════════════ */
+let worldGeoPath = '';     // SVG path string for all country fills
+let worldBorderPath = '';  // SVG path string for country borders
+let worldLoaded = false;
+
+async function loadWorldMap() {
+  try {
+    const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+    const topo = await res.json();
+    const W = 840, H = 440;
+
+    // Project lon/lat → SVG x,y  (equirectangular)
+    const pt = ([lon, lat]) =>
+      `${((lon + 180) * W / 360).toFixed(1)},${((90 - lat) * H / 180).toFixed(1)}`;
+
+    const ring2d = ring => 'M ' + ring.map(pt).join(' L ') + ' Z';
+
+    // Country fill paths
+    const countries = topojson.feature(topo, topo.objects.countries);
+    let fills = '';
+    countries.features.forEach(f => {
+      if (!f.geometry) return;
+      const g = f.geometry;
+      if (g.type === 'Polygon') {
+        fills += ring2d(g.coordinates[0]);
+      } else if (g.type === 'MultiPolygon') {
+        g.coordinates.forEach(poly => { fills += ring2d(poly[0]); });
+      }
+    });
+
+    // Country border mesh (internal borders only — coastlines excluded)
+    const borderMesh = topojson.mesh(topo, topo.objects.countries, (a, b) => a !== b);
+    let borders = '';
+    const lineToPath = coords => 'M ' + coords.map(pt).join(' L ');
+    if (borderMesh.type === 'LineString') {
+      borders = lineToPath(borderMesh.coordinates);
+    } else if (borderMesh.type === 'MultiLineString') {
+      borders = borderMesh.coordinates.map(lineToPath).join(' ');
+    }
+
+    worldGeoPath = fills;
+    worldBorderPath = borders;
+    worldLoaded = true;
+
+    // Re-render if map or detail is currently visible
+    if (state.view === 'map' || state.selected) render();
+  } catch (e) {
+    console.warn('World map CDN load failed — using simplified fallback.', e.message);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════════════════════ */
 render();
+loadWorldMap();
 </script>
 </body>
 </html>
