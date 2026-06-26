@@ -910,32 +910,37 @@ const FORMATS = [
     diagram:`CALENDAR YEAR
 │
 ├─ APERTURA (Opening Tournament)
-│    ├─ Regular Phase (Round Robin)
-│    │       │
-│    │  STANDINGS
-│    │       │
+│    │
+│    ├─ SIMPLE VARIANT (Liga MX, Colombia…)
+│    │    └─ Regular Phase (Full Round Robin)
+│    │              └─ STANDINGS → top N enter playoffs
+│    │
+│    ├─ ZONED VARIANT (Liga Argentina…)
+│    │    ├─ Zone A (15 teams) ──► intra-zone round robin
+│    │    └─ Zone B (15 teams) ──► intra-zone round robin
+│    │              └─ Top 8 per zone → cross-zone bracket
+│    │
 │    └─ PLAYOFFS / LIGUILLA
-│           ├─ Quarterfinals [Two legs]
-│           ├─ Semifinals   [Two legs]
-│           └─ Final        [Two legs]
+│           ├─ Quarterfinals
+│           ├─ Semifinals
+│           └─ Final (neutral)
 │                   │
-│           APERTURA CHAMPION ◄──────── separate annual award
+│           APERTURA CHAMPION ◄──────── independent title
 │
 └─ CLAUSURA (Closing Tournament)
-     ├─ Regular Phase (Round Robin)
-     └─ PLAYOFFS / LIGUILLA
-             └─ CLAUSURA CHAMPION ◄──── separate annual award
+     └─ [same structure as Apertura]
+             └─ CLAUSURA CHAMPION ◄──── independent title
 
-Annual aggregate table ──► used for relegation (independent of either champion)`,
+Annual aggregate table ──► relegation (separate from both champions)`,
     props:[
-      ['Produces Standings','✓ Yes (per tournament)'],['Produces Bracket','✓ Yes (playoffs)'],
-      ['Has Groups','✗ No'],['Champions Per Year','2'],
-      ['Annual Table','Yes (for relegation)'],['Leg Structure','Two-leg playoffs'],
-      ['Duration','6 months per tournament'],['Region','Latin America'],
+      ['Produces Standings','✓ Yes (per tournament / per zone)'],['Produces Bracket','✓ Yes (playoffs)'],
+      ['Has Groups','Sometimes (zoned variant)'],['Champions Per Year','2 (+ sometimes an annual title)'],
+      ['Annual Table','Yes (for relegation)'],['Leg Structure','Varies: two-leg or single-match final'],
+      ['Duration','~5–6 months per tournament'],['Region','Latin America'],
     ],
     pros:['Two championship events per year = more broadcast moments','Shorter, more intense tournaments','Aligns with international window calendar','Allows mid-year squad recalibration'],
     cons:['Two champions per year confuses international audiences','Relegation via annual table is complex to explain','Regular season "winner" is not the champion','Historical cross-season comparisons are difficult'],
-    examples:['Liga MX (Mexico)','Colombian Liga BetPlay','Peruvian Liga 1','Central American leagues'],
+    examples:['Liga Profesional Argentina','Liga MX (Mexico)','Colombian Liga BetPlay','Peruvian Liga 1','Ecuadorian LigaPro','Central American leagues'],
   },
   {
     id:'league_playoff',
