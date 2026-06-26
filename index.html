@@ -1133,24 +1133,81 @@ Result: e.g. 1–1
 /* ═══════════════════════════════════════════════════════════
    MAP DATA
 ═══════════════════════════════════════════════════════════ */
-// SVG viewBox 0 0 840 440 — approx Mercator projection
-// x = (lon + 180) * 2.333,  y = (90 - lat) * 2.444
+// SVG viewBox 0 0 840 440 — equirectangular projection
+// x = (lon + 180) * 840/360  |  y = (90 - lat) * 440/180
+// Multiple sub-paths (M…Z M…Z) per region for islands / separated landmasses
 const REGION_PATHS = {
-  'North America': 'M 35,50 L 298,44 L 262,158 L 208,184 L 140,178 L 35,120 Z',
-  'South America': 'M 237,200 L 338,228 L 305,358 L 255,368 L 224,342 L 236,240 Z',
-  'Europe':        'M 393,70 L 510,44 L 520,100 L 508,156 L 408,170 L 384,130 Z',
-  'Africa':        'M 379,134 L 538,127 L 522,306 L 447,392 L 370,362 L 364,212 Z',
-  'Asia':          'M 510,44 L 758,29 L 772,182 L 682,212 L 582,196 L 522,132 L 510,44 Z',
-  'Oceania':       'M 648,248 L 840,248 L 840,340 L 648,340 Z',
+  // CONCACAF: USA · Canada · Mexico · Central America · Caribbean
+  'North America':
+    // Main continent
+    'M 35,73 L 35,59 L 91,73 L 107,73 L 140,39 L 226,17 L 261,49 L 297,105 ' +
+    'L 280,110 L 257,117 L 241,134 L 233,159 L 216,169 L 226,195 L 233,201 ' +
+    'L 216,188 L 205,176 L 179,174 L 175,171 L 163,163 L 147,142 L 135,129 ' +
+    'L 130,105 L 116,85 Z ' +
+    // Greenland
+    'M 250,32 L 310,17 L 363,44 L 340,71 L 285,78 L 257,56 Z',
+
+  // CONMEBOL: South America
+  'South America':
+    'M 240,201 L 275,193 L 304,207 L 338,230 L 329,259 L 320,276 ' +
+    'L 307,285 L 300,300 L 289,312 L 282,347 L 268,354 L 263,356 ' +
+    'L 257,344 L 252,320 L 252,295 L 257,264 L 233,227 L 238,217 Z',
+
+  // UEFA: Europe (including Turkey, Russia W of Urals)
+  'Europe':
+    // Mainland + Scandinavian peninsula
+    'M 398,132 L 398,113 L 414,113 L 406,98 L 408,93 L 401,93 L 401,78 ' +
+    'L 408,76 L 420,71 L 432,78 L 432,68 L 455,49 L 467,49 L 484,46 L 494,51 ' +
+    'L 560,54 L 563,88 L 540,108 L 537,115 L 516,127 L 502,129 L 479,129 ' +
+    'L 471,127 L 455,127 L 453,122 L 437,113 L 432,113 L 426,117 L 420,127 L 408,132 Z ' +
+    // British Isles (Great Britain)
+    'M 401,80 L 412,74 L 419,80 L 415,92 L 405,95 Z ' +
+    // Ireland
+    'M 396,87 L 403,84 L 403,92 L 397,93 Z',
+
+  // CAF: Africa
+  'Africa':
+    'M 379,134 L 408,132 L 443,130 L 455,130 L 478,140 L 498,144 ' +
+    'L 520,166 L 537,190 L 521,195 L 514,225 L 513,244 L 501,261 ' +
+    'L 501,281 L 497,288 L 483,305 L 462,305 L 453,305 L 448,288 ' +
+    'L 448,264 L 439,224 L 425,211 L 420,207 L 408,207 L 384,195 ' +
+    'L 379,168 Z ' +
+    // Madagascar
+    'M 521,256 L 527,242 L 533,261 L 526,278 L 519,268 Z',
+
+  // AFC: Asia (mainland + Japan + Indonesia)
+  'Asia':
+    // Main Eurasian landmass
+    'M 560,54 L 630,41 L 793,49 L 840,59 L 840,156 L 817,163 ' +
+    'L 758,127 L 745,154 L 700,176 L 666,190 L 638,215 L 614,224 ' +
+    'L 599,200 L 607,188 L 626,163 L 605,152 L 577,166 ' +
+    'L 553,154 L 537,115 L 549,112 L 562,88 Z ' +
+    // Japan
+    'M 746,113 L 758,107 L 762,119 L 750,128 Z ' +
+    // Sri Lanka
+    'M 601,207 L 606,204 L 607,211 L 603,212 Z ' +
+    // Sumatra
+    'M 600,214 L 638,208 L 645,219 L 620,228 Z ' +
+    // Borneo/Java
+    'M 648,221 L 670,218 L 674,234 L 653,240 L 638,234 Z',
+
+  // OFC: Oceania (Australia + NZ)
+  'Oceania':
+    // Australia
+    'M 689,268 L 695,254 L 720,248 L 758,264 L 774,252 L 785,262 ' +
+    'L 775,288 L 771,312 L 756,320 L 746,310 L 715,305 L 689,305 Z ' +
+    // New Zealand (N + S islands)
+    'M 808,330 L 819,313 L 824,322 L 815,335 Z ' +
+    'M 803,342 L 812,337 L 814,350 L 804,355 Z',
 };
 
 const REGION_META = {
-  'North America': { conf:'CONCACAF', color:'#22c55e', dim:'#0b2418', lx:155, ly:135 },
-  'South America': { conf:'CONMEBOL', color:'#f59e0b', dim:'#2a1c02', lx:280, ly:300 },
-  'Europe':        { conf:'UEFA',     color:'#5468ff', dim:'#0a1238', lx:448, ly:108 },
-  'Africa':        { conf:'CAF',      color:'#f97316', dim:'#2a1002', lx:450, ly:260 },
-  'Asia':          { conf:'AFC',      color:'#a855f7', dim:'#180a38', lx:645, ly:128 },
-  'Oceania':       { conf:'OFC',      color:'#06b6d4', dim:'#032428', lx:744, ly:294 },
+  'North America': { conf:'CONCACAF', color:'#22c55e', dim:'#0b2418', lx:155, ly:125 },
+  'South America': { conf:'CONMEBOL', color:'#f59e0b', dim:'#2a1c02', lx:280, ly:295 },
+  'Europe':        { conf:'UEFA',     color:'#5468ff', dim:'#0a1238', lx:448, ly:97  },
+  'Africa':        { conf:'CAF',      color:'#f97316', dim:'#2a1002', lx:455, ly:240 },
+  'Asia':          { conf:'AFC',      color:'#a855f7', dim:'#180a38', lx:660, ly:112 },
+  'Oceania':       { conf:'OFC',      color:'#06b6d4', dim:'#032428', lx:730, ly:292 },
 };
 
 // Approximate map dot positions (SVG xy) per competition id
@@ -1492,7 +1549,13 @@ function renderMiniMap(region) {
       <div class="d-sec-title">Geographic Location</div>
       <div class="minimap-wrap">
         <svg viewBox="0 0 840 440" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:4px">
-          <rect width="840" height="440" fill="#050710" rx="4"/>
+          <rect width="840" height="440" fill="#04060e" rx="4"/>
+          <!-- subtle graticule -->
+          ${[73,147,220,293,367].map(y=>`<line x1="0" y1="${y}" x2="840" y2="${y}" stroke="#0d1428" stroke-width="0.8"/>`).join('')}
+          ${[140,280,420,560,700].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="440" stroke="#0d1428" stroke-width="0.8"/>`).join('')}
+          <!-- landmass silhouette -->
+          ${Object.entries(REGION_PATHS).map(([,p])=>`<path d="${p}" fill="#0c1122" stroke="#151d35" stroke-width="0.5"/>`).join('')}
+          <!-- highlighted paths -->
           ${paths}
           <text x="${meta.lx}" y="${meta.ly}" fill="${meta.color}" font-size="16" font-weight="700" text-anchor="middle" font-family="-apple-system,sans-serif" opacity="0.9" style="pointer-events:none">${region}</text>
         </svg>
@@ -1594,9 +1657,30 @@ function renderMapView(filtered) {
     <div class="map-wrap">
       <div class="map-svg-area">
         <svg viewBox="0 0 840 440" xmlns="http://www.w3.org/2000/svg">
-          <rect width="840" height="440" fill="#050710" rx="6"/>
-          <line x1="0" y1="220" x2="840" y2="220" stroke="#0d1020" stroke-width="1"/>
-          <line x1="420" y1="0" x2="420" y2="440" stroke="#0d1020" stroke-width="1"/>
+          <rect width="840" height="440" fill="#04060e" rx="6"/>
+
+          <!-- Graticule: meridians every 60° -->
+          ${[140,280,420,560,700].map(x =>
+            `<line x1="${x}" y1="0" x2="${x}" y2="440" stroke="#0e1428" stroke-width="0.8"/>`
+          ).join('')}
+          <!-- Graticule: parallels at 60°N, 30°N, 0°, 30°S, 60°S -->
+          ${[73,147,220,293,367].map(y =>
+            `<line x1="0" y1="${y}" x2="840" y2="${y}" stroke="#0e1428" stroke-width="0.8"/>`
+          ).join('')}
+          <!-- Tropic lines (23.5° N/S) -->
+          <line x1="0" y1="162" x2="840" y2="162" stroke="#111830" stroke-width="0.6" stroke-dasharray="4,6"/>
+          <line x1="0" y1="277" x2="840" y2="277" stroke="#111830" stroke-width="0.6" stroke-dasharray="4,6"/>
+          <!-- Equator (slightly brighter) -->
+          <line x1="0" y1="220" x2="840" y2="220" stroke="#141c38" stroke-width="1"/>
+          <!-- Prime meridian -->
+          <line x1="420" y1="0" x2="420" y2="440" stroke="#141c38" stroke-width="1"/>
+
+          <!-- Landmass silhouette (all regions, very faint, for geographic context) -->
+          ${Object.entries(REGION_PATHS).map(([,p]) =>
+            `<path d="${p}" fill="#0c1122" stroke="#151d35" stroke-width="0.5"/>`
+          ).join('')}
+
+          <!-- Confederation region overlays -->
           ${regionPaths}
           ${regionLabels}
           ${compDots}
