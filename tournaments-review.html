@@ -88,10 +88,54 @@ select{width:100%;background:var(--surface2);border:1px solid var(--border);bord
 </style>
 </head>
 <body>
-<div id="app"></div>
+<div id="gate" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px">
+  <div style="width:100%;max-width:340px">
+    <div style="font-size:22px;font-weight:700;margin-bottom:4px">Tournaments 2026</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:24px">Enter password to continue</div>
+    <input type="password" id="gate-input" placeholder="Password" style="width:100%;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkGate()" />
+    <button onclick="checkGate()" style="width:100%;padding:12px;font-size:14px;font-weight:600;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer">Continue</button>
+    <div id="gate-err" style="font-size:12px;color:#dc2626;margin-top:10px;text-align:center;display:none">Incorrect password</div>
+  </div>
+</div>
+<div id="app" style="display:none"></div>
 <div class="toast" id="toast"></div>
 
 <script>
+const PWD_HASH = '8a974322dbf4da39a09b2cb9c77c378cc8027824a3fb9d83f63e23bedcf01a58';
+const SESSION_KEY = 'tr-auth';
+
+async function sha256(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkGate(){
+  const val = document.getElementById('gate-input').value;
+  const hash = await sha256(val);
+  if(hash === PWD_HASH){
+    sessionStorage.setItem(SESSION_KEY,'1');
+    document.getElementById('gate').style.display='none';
+    document.getElementById('app').style.display='block';
+    init();
+  } else {
+    document.getElementById('gate-err').style.display='block';
+    document.getElementById('gate-input').value='';
+    document.getElementById('gate-input').focus();
+  }
+}
+
+const isAdmin = location.search.includes('admin');
+
+function init(){
+  isAdmin ? renderAdmin() : renderReviewer();
+}
+
+if(sessionStorage.getItem(SESSION_KEY)==='1'){
+  document.getElementById('gate').style.display='none';
+  document.getElementById('app').style.display='block';
+  init();
+}
+
 const BIN_ID  = '6a440451da38895dfe1767d2';
 const API_KEY = '$2a$10$dojU3zzCGAv4ppHk3eqpkOsqMi65ejXLNeC82imww6aQFV1tlpFiy';
 const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
@@ -127,8 +171,6 @@ async function binPut(data){
   await fetch(BIN_URL, { method:'PUT', headers: HEADERS, body: JSON.stringify(data) });
 }
 
-const isAdmin = location.search.includes('admin');
-isAdmin ? renderAdmin() : renderReviewer();
 
 /* ── REVIEWER ─────────────────────────────────── */
 function renderReviewer(){
