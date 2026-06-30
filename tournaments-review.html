@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Tournaments 2026 — Review</title>
+<title>Tournaments 2026</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -63,18 +63,17 @@ select{width:100%;background:var(--surface2);border:1px solid var(--border);bord
 .add-btn{width:100%;padding:11px;font-size:14px;font-weight:500;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer}
 .submit-section{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
 .submit-all{width:100%;padding:14px;font-size:15px;font-weight:600;background:var(--blue);color:#fff;border:none;border-radius:var(--r);cursor:pointer}
+.submit-all:disabled{opacity:.5;cursor:not-allowed}
 .submit-hint{font-size:12px;color:var(--text3);text-align:center}
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 20px;border-radius:var(--r);font-size:13px;font-weight:500;opacity:0;transition:opacity .3s;pointer-events:none;z-index:100;white-space:nowrap}
 .toast.show{opacity:1}
 
 /* ADMIN */
-.admin-header{margin-bottom:20px}
-.admin-header h1{font-size:20px;margin-bottom:4px}
-.paste-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:20px}
-.paste-box label{font-size:12px;color:var(--text2);display:block;margin-bottom:8px}
-.paste-box textarea{min-height:90px;font-size:12px}
-.parse-btn{margin-top:8px;width:100%;padding:11px;font-size:14px;font-weight:500;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer}
-.reviewer-chip{display:inline-flex;align-items:center;gap:6px;background:var(--blue-bg);border:1px solid var(--blue);color:var(--blue);font-size:12px;font-weight:500;padding:4px 10px;border-radius:20px;margin:0 6px 6px 0}
+.admin-topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;gap:12px}
+.admin-topbar h1{font-size:20px}
+.copy-ai-btn{padding:10px 16px;font-size:13px;font-weight:600;background:var(--blue);color:#fff;border:none;border-radius:var(--r);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.copy-ai-btn:active{opacity:.8}
+.reviewer-chip{display:inline-flex;align-items:center;gap:5px;background:var(--blue-bg);border:1px solid var(--blue);color:var(--blue);font-size:12px;font-weight:500;padding:4px 10px;border-radius:20px;margin:0 6px 6px 0}
 .reviewers-row{margin-bottom:16px;display:flex;flex-wrap:wrap}
 .admin-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
 .admin-card-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
@@ -82,7 +81,10 @@ select{width:100%;background:var(--surface2);border:1px solid var(--border);bord
 .admin-comment{background:var(--surface2);border-radius:8px;padding:9px 11px;font-size:13px;margin-bottom:6px}
 .admin-comment-author{font-size:11px;font-weight:600;color:var(--blue);margin-bottom:2px}
 .suggested-tag{font-size:11px;background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:20px;margin-left:6px}
-.empty-admin{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px}
+.empty-admin{text-align:center;padding:60px 20px;color:var(--text3);font-size:14px;line-height:1.8}
+.loading{text-align:center;padding:60px 20px;color:var(--text2);font-size:14px}
+.refresh-btn{margin-top:12px;padding:9px 18px;font-size:13px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text2);cursor:pointer}
+.admin-meta{font-size:11px;color:var(--text3);margin-top:4px}
 </style>
 </head>
 <body>
@@ -90,7 +92,10 @@ select{width:100%;background:var(--surface2);border:1px solid var(--border);bord
 <div class="toast" id="toast"></div>
 
 <script>
-const STORAGE_KEY = 'tournaments-review-v3';
+const BIN_ID  = '6a440451da38895dfe1767d2';
+const API_KEY = '$2a$10$dojU3zzCGAv4ppHk3eqpkOsqMi65ejXLNeC82imww6aQFV1tlpFiy';
+const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+const HEADERS = { 'Content-Type':'application/json', 'X-Master-Key': API_KEY, 'X-Bin-Versioning': 'false' };
 
 const defaultTournaments = [
   {id:'brasileirao',month:'July',name:'Brasileirão Serie A 2026',type:'ok',meta:'Resumes Jul 16–22 · Single table · 20 teams',desc:'Paused for the World Cup since May. Full season ends Dec 2. Groups view works as-is.',flag:'🇧🇷'},
@@ -106,35 +111,36 @@ const defaultTournaments = [
   {id:'ucl',month:'September',name:'UEFA Champions League 2026–27',type:'warn',meta:'Sep 8 — league phase · 36-team table + knockout',desc:'New format: 36 clubs in one big table (8 games each), then R16 knockout. Needs adjustments for 36 teams.',flag:'🏆'},
 ];
 
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function showToast(msg, err){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.background=err?'#dc2626':'#22c55e';
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2800);
+}
 
-function showToast(msg, err) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.background = err ? '#dc2626' : '#22c55e';
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+async function binGet(){
+  const r = await fetch(BIN_URL, { headers: {'X-Master-Key': API_KEY} });
+  const j = await r.json();
+  return j.record || {reviews:[]};
+}
+async function binPut(data){
+  await fetch(BIN_URL, { method:'PUT', headers: HEADERS, body: JSON.stringify(data) });
 }
 
 const isAdmin = location.search.includes('admin');
+isAdmin ? renderAdmin() : renderReviewer();
 
-if(isAdmin) {
-  renderAdmin();
-} else {
-  renderReviewer();
-}
-
-/* ── REVIEWER ─────────────────────────────────────── */
-function loadState() {
-  try { const s = localStorage.getItem(STORAGE_KEY); if(s) return JSON.parse(s); } catch(e){}
-  const s = { tournaments: JSON.parse(JSON.stringify(defaultTournaments)), comments: {}, openForms: {} };
-  defaultTournaments.forEach(t => { s.comments[t.id] = []; s.openForms[t.id] = false; });
-  return s;
-}
-function saveState(state) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){} }
-
-function renderReviewer() {
-  let state = loadState();
+/* ── REVIEWER ─────────────────────────────────── */
+function renderReviewer(){
+  const LKEY = 'tr-local-v1';
+  let localState = (() => {
+    try { const s=localStorage.getItem(LKEY); if(s) return JSON.parse(s); } catch(e){}
+    const s={tournaments:JSON.parse(JSON.stringify(defaultTournaments)),comments:{},openForms:{}};
+    defaultTournaments.forEach(t=>{s.comments[t.id]=[];s.openForms[t.id]=false;});
+    return s;
+  })();
+  function saveLocal(){ try{localStorage.setItem(LKEY,JSON.stringify(localState));}catch(e){} }
+  function getName(){ return document.getElementById('reviewer-name')?.value.trim()||'Anonymous'; }
 
   document.getElementById('app').innerHTML = `
     <h1>Tournaments 2026</h1>
@@ -165,7 +171,7 @@ function renderReviewer() {
               <option value="ok">✅ Ready — no dev needed</option>
               <option value="warn">⚠️ Needs work — custom format</option>
             </select>
-            <div class="fit-hint"><strong>✅ Ready:</strong> standard table or knockout — app supports it.<br><strong>⚠️ Needs work:</strong> custom format, extra dev needed.</div>
+            <div class="fit-hint"><strong>✅ Ready:</strong> standard table or knockout.<br><strong>⚠️ Needs work:</strong> custom format, extra dev needed.</div>
           </div>
         </div>
         <div><div class="field-label">Note (optional)</div><input type="text" id="new-note" placeholder="Format, audience, anything relevant..." /></div>
@@ -174,28 +180,24 @@ function renderReviewer() {
     </div>
     <div class="submit-section">
       <button class="submit-all" id="submit-btn"><i class="ti ti-send"></i> Submit my comments</button>
-      <div class="submit-hint">Generates a link — paste it in the Google Chat thread</div>
+      <div class="submit-hint" id="submit-hint">Saves your feedback to the shared panel</div>
     </div>
   `;
 
-  function getName() { return document.getElementById('reviewer-name').value.trim() || 'Anonymous'; }
-
-  function renderList() {
-    const container = document.getElementById('t-list');
-    let html = '', lastMonth = '';
-    state.tournaments.forEach(t => {
-      if(t.month !== lastMonth) { html += `<div class="section-label">${esc(t.month)}</div>`; lastMonth = t.month; }
-      const cs = state.comments[t.id] || [];
-      const commentsHtml = cs.length === 0
-        ? `<div class="no-comments">No comments yet</div>`
-        : cs.map(c => `<div class="comment"><div class="comment-author">${esc(c.author)}</div><div class="comment-text">${esc(c.text)}</div></div>`).join('');
-      const badgeCls = t.userAdded ? 'badge-user' : (t.type === 'ok' ? 'badge-ok' : 'badge-warn');
-      const badgeLabel = t.userAdded ? '➕ Suggested' : (t.type === 'ok' ? '✅ Ready' : '⚠️ Needs work');
-      const iconHtml = t.flag ? `<span class="t-flag">${t.flag}</span>` : '';
-      const formHtml = state.openForms[t.id]
-        ? `<div class="comment-form"><textarea id="ta-${t.id}" placeholder="Your comment..."></textarea><button class="submit-comment" data-id="${t.id}">Add comment</button></div>`
-        : `<button class="toggle-btn" data-toggle="${t.id}"><i class="ti ti-message-circle"></i> Add comment</button>`;
-      html += `<div class="card${t.userAdded?' user-added':''}">
+  function renderList(){
+    const container=document.getElementById('t-list');
+    let html='',lastMonth='';
+    localState.tournaments.forEach(t=>{
+      if(t.month!==lastMonth){html+=`<div class="section-label">${esc(t.month)}</div>`;lastMonth=t.month;}
+      const cs=localState.comments[t.id]||[];
+      const commentsHtml=cs.length===0?`<div class="no-comments">No comments yet</div>`:cs.map(c=>`<div class="comment"><div class="comment-author">${esc(c.author)}</div><div class="comment-text">${esc(c.text)}</div></div>`).join('');
+      const badgeCls=t.userAdded?'badge-user':(t.type==='ok'?'badge-ok':'badge-warn');
+      const badgeLabel=t.userAdded?'➕ Suggested':(t.type==='ok'?'✅ Ready':'⚠️ Needs work');
+      const iconHtml=t.flag?`<span class="t-flag">${t.flag}</span>`:'';
+      const formHtml=localState.openForms[t.id]
+        ?`<div class="comment-form"><textarea id="ta-${t.id}" placeholder="Your comment..."></textarea><button class="submit-comment" data-id="${t.id}">Add comment</button></div>`
+        :`<button class="toggle-btn" data-toggle="${t.id}"><i class="ti ti-message-circle"></i> Add comment</button>`;
+      html+=`<div class="card${t.userAdded?' user-added':''}">
         <div class="card-header"><div class="card-name-row">${iconHtml}<span class="card-name">${esc(t.name)}</span></div><span class="badge ${badgeCls}">${badgeLabel}</span></div>
         <div class="card-meta">${esc(t.meta)}</div>
         <div class="card-desc">${esc(t.desc)}</div>
@@ -203,162 +205,177 @@ function renderReviewer() {
         ${formHtml}
       </div>`;
     });
-    container.innerHTML = html;
-
-    container.querySelectorAll('[data-toggle]').forEach(btn => {
-      btn.onclick = () => { state.openForms[btn.dataset.toggle] = true; saveState(state); renderList(); setTimeout(()=>{ const el=document.getElementById('ta-'+btn.dataset.toggle); if(el)el.focus(); },50); };
+    container.innerHTML=html;
+    container.querySelectorAll('[data-toggle]').forEach(btn=>{
+      btn.onclick=()=>{ localState.openForms[btn.dataset.toggle]=true; saveLocal(); renderList(); setTimeout(()=>{const el=document.getElementById('ta-'+btn.dataset.toggle);if(el)el.focus();},50); };
     });
-    container.querySelectorAll('.submit-comment').forEach(btn => {
-      btn.onclick = () => {
-        const id = btn.dataset.id;
-        const el = document.getElementById('ta-'+id);
-        const text = el ? el.value.trim() : '';
-        if(!text) return;
-        if(!state.comments[id]) state.comments[id] = [];
-        state.comments[id].push({ author: getName(), text, ts: new Date().toISOString() });
-        state.openForms[id] = false;
-        saveState(state);
-        renderList();
+    container.querySelectorAll('.submit-comment').forEach(btn=>{
+      btn.onclick=()=>{
+        const id=btn.dataset.id, el=document.getElementById('ta-'+id), text=el?el.value.trim():'';
+        if(!text)return;
+        if(!localState.comments[id])localState.comments[id]=[];
+        localState.comments[id].push({author:getName(),text,ts:new Date().toISOString()});
+        localState.openForms[id]=false; saveLocal(); renderList();
       };
     });
   }
 
   renderList();
 
-  document.getElementById('add-btn').onclick = () => {
-    const name = document.getElementById('new-name').value.trim();
-    if(!name) { showToast('Add a competition name first', true); return; }
-    const id = 'user-'+Date.now();
-    state.tournaments.push({ id, month:'Suggested by '+getName(), name, type:document.getElementById('new-fit').value, meta:document.getElementById('new-date').value.trim()||'Date TBD', desc:document.getElementById('new-note').value.trim()||'—', userAdded:true, flag:'➕' });
-    state.comments[id] = [];
-    state.openForms[id] = false;
+  document.getElementById('add-btn').onclick=()=>{
+    const name=document.getElementById('new-name').value.trim();
+    if(!name){showToast('Add a competition name first',true);return;}
+    const id='user-'+Date.now();
+    localState.tournaments.push({id,month:'Suggested by '+getName(),name,type:document.getElementById('new-fit').value,meta:document.getElementById('new-date').value.trim()||'Date TBD',desc:document.getElementById('new-note').value.trim()||'—',userAdded:true,flag:'➕'});
+    localState.comments[id]=[]; localState.openForms[id]=false;
     document.getElementById('new-name').value='';
     document.getElementById('new-date').value='';
     document.getElementById('new-note').value='';
-    saveState(state);
-    renderList();
-    showToast('Competition added!');
+    saveLocal(); renderList(); showToast('Competition added!');
   };
 
-  document.getElementById('submit-btn').onclick = () => {
-    const name = getName();
-    const comments = {};
-    const suggested = [];
-    let hasContent = false;
-
-    state.tournaments.forEach(t => {
-      const cs = (state.comments[t.id]||[]).filter(c=>c.author===name);
-      if(cs.length) { comments[t.id] = cs.map(c=>c.text); hasContent = true; }
-      if(t.userAdded) { suggested.push({name:t.name,meta:t.meta,desc:t.desc,by:name}); hasContent = true; }
+  document.getElementById('submit-btn').onclick=async()=>{
+    const name=getName();
+    const comments={};
+    const suggested=[];
+    let hasContent=false;
+    localState.tournaments.forEach(t=>{
+      const cs=(localState.comments[t.id]||[]).filter(c=>c.author===name);
+      if(cs.length){comments[t.id]=cs.map(c=>c.text);hasContent=true;}
+      if(t.userAdded){suggested.push({name:t.name,meta:t.meta,desc:t.desc,by:name});hasContent=true;}
     });
-
-    if(!hasContent) { showToast('No comments yet — add some first!', true); return; }
-
-    const payload = btoa(unescape(encodeURIComponent(JSON.stringify({ name, comments, suggested, ts: new Date().toISOString() }))));
-    const url = location.origin + location.pathname + '?admin#r=' + payload;
-
-    if(navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(()=> showToast('Link copied! Paste it in Google Chat'));
-    } else {
-      const ta = document.createElement('textarea');
-      ta.value = url; ta.style.position='fixed'; ta.style.opacity='0';
-      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-      showToast('Link copied! Paste it in Google Chat');
+    if(!hasContent){showToast('No comments yet — add some first!',true);return;}
+    const btn=document.getElementById('submit-btn');
+    btn.disabled=true; btn.textContent='Saving...';
+    document.getElementById('submit-hint').textContent='Connecting to server...';
+    try {
+      const current=await binGet();
+      const reviews=current.reviews||[];
+      const existing=reviews.findIndex(r=>r.name===name);
+      const entry={name,comments,suggested,ts:new Date().toISOString()};
+      if(existing>=0) reviews[existing]=entry; else reviews.push(entry);
+      await binPut({reviews});
+      showToast('Saved! ✓ Your feedback is on the panel.');
+      btn.textContent='✓ Submitted';
+      document.getElementById('submit-hint').textContent='Your feedback was saved successfully';
+    } catch(e){
+      showToast('Error saving — check connection',true);
+      btn.disabled=false; btn.innerHTML='<i class="ti ti-send"></i> Submit my comments';
+      document.getElementById('submit-hint').textContent='Saves your feedback to the shared panel';
     }
   };
 }
 
-/* ── ADMIN ────────────────────────────────────────── */
-function renderAdmin() {
-  document.title = 'Tournaments 2026 — Admin';
+/* ── ADMIN ─────────────────────────────────────── */
+async function renderAdmin(){
+  document.title='Tournaments 2026 — Results';
+  document.getElementById('app').innerHTML=`<div class="loading"><i class="ti ti-loader" style="font-size:28px;display:block;margin-bottom:8px"></i>Loading reviews...</div>`;
+  await loadAdmin();
+}
 
-  const reviews = [];
+async function loadAdmin(){
+  try {
+    const data=await binGet();
+    const reviews=data.reviews||[];
+    renderAdminUI(reviews);
+  } catch(e){
+    document.getElementById('app').innerHTML=`<div class="empty-admin"><i class="ti ti-wifi-off" style="font-size:36px;display:block;margin-bottom:12px"></i>Could not load reviews.<br><button class="refresh-btn" onclick="loadAdmin()">Try again</button></div>`;
+  }
+}
 
-  if(location.hash.startsWith('#r=')) {
-    try {
-      const data = JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3)))));
-      reviews.push(data);
-    } catch(e){}
+function renderAdminUI(reviews){
+  const app=document.getElementById('app');
+
+  if(reviews.length===0){
+    app.innerHTML=`
+      <div class="admin-topbar"><h1>Results panel</h1><button class="refresh-btn" onclick="loadAdmin()"><i class="ti ti-refresh"></i> Refresh</button></div>
+      <div class="empty-admin"><i class="ti ti-inbox" style="font-size:40px;display:block;margin-bottom:12px;opacity:.3"></i>No reviews yet.<br>Share the link with your team and wait for submissions.</div>`;
+    return;
   }
 
-  function render() {
-    const app = document.getElementById('app');
-    app.innerHTML = `
-      <div class="admin-header">
-        <h1>Results panel</h1>
-        <p class="subtitle">Paste review links from Google Chat to see everyone's feedback.</p>
-      </div>
-      <div class="paste-box">
-        <label>Paste review links here (one per line)</label>
-        <textarea id="paste-area" placeholder="https://mmassuh.github.io/football-competition-explorer/tournaments-review.html?admin#r=..."></textarea>
-        <button class="parse-btn" id="parse-btn"><i class="ti ti-download"></i> Load reviews</button>
-      </div>
-      ${reviews.length === 0 ? `<div class="empty-admin"><i class="ti ti-inbox" style="font-size:40px;display:block;margin-bottom:12px;opacity:.3"></i>No reviews yet.<br>Paste links above to load them.</div>` : renderResults()}
-    `;
+  const byTournament={};
+  defaultTournaments.forEach(t=>{byTournament[t.id]={t,comments:[]};});
+  const allSuggested=[];
 
-    document.getElementById('parse-btn').onclick = () => {
-      const lines = document.getElementById('paste-area').value.split('\n').map(l=>l.trim()).filter(Boolean);
-      let added = 0;
-      lines.forEach(line => {
-        try {
-          const hash = new URL(line).hash;
-          if(!hash.startsWith('#r=')) return;
-          const data = JSON.parse(decodeURIComponent(escape(atob(hash.slice(3)))));
-          if(!reviews.find(r=>r.name===data.name && r.ts===data.ts)) { reviews.push(data); added++; }
-        } catch(e){}
-      });
-      if(added) { showToast(`Loaded ${added} review${added>1?'s':''}!`); render(); }
-      else showToast('No valid links found', true);
-    };
-  }
-
-  function renderResults() {
-    const reviewerChips = reviews.map(r=>`<span class="reviewer-chip"><i class="ti ti-user" style="font-size:12px"></i>${esc(r.name)}</span>`).join('');
-
-    const byTournament = {};
-    defaultTournaments.forEach(t => { byTournament[t.id] = { t, comments: [] }; });
-
-    const allSuggested = [];
-
-    reviews.forEach(r => {
-      Object.entries(r.comments||{}).forEach(([id, texts]) => {
-        if(!byTournament[id]) byTournament[id] = { t: defaultTournaments.find(t=>t.id===id)||{id,name:id,flag:'🏆'}, comments: [] };
-        texts.forEach(text => byTournament[id].comments.push({ author: r.name, text }));
-      });
-      (r.suggested||[]).forEach(s => allSuggested.push({ ...s, by: r.name }));
+  reviews.forEach(r=>{
+    Object.entries(r.comments||{}).forEach(([id,texts])=>{
+      if(!byTournament[id])byTournament[id]={t:defaultTournaments.find(t=>t.id===id)||{id,name:id,flag:'🏆'},comments:[]};
+      texts.forEach(text=>byTournament[id].comments.push({author:r.name,text}));
     });
+    (r.suggested||[]).forEach(s=>allSuggested.push({...s,by:r.name}));
+  });
 
-    const withComments = Object.values(byTournament).filter(x=>x.comments.length>0);
-    let html = `<div class="reviewers-row">${reviewerChips}</div>`;
+  const withComments=Object.values(byTournament).filter(x=>x.comments.length>0);
+  const reviewerChips=reviews.map(r=>`<span class="reviewer-chip"><i class="ti ti-user" style="font-size:11px"></i>${esc(r.name)}</span>`).join('');
 
-    if(withComments.length === 0 && allSuggested.length === 0) {
-      html += `<div class="empty-admin" style="padding:20px">No comments or suggestions in these reviews.</div>`;
-      return html;
-    }
+  let html=`
+    <div class="admin-topbar">
+      <div><h1>Results panel</h1><p class="subtitle">${reviews.length} review${reviews.length!==1?'s':''} received</p></div>
+      <button class="copy-ai-btn" id="copy-ai-btn"><i class="ti ti-brain"></i> Copy for AI</button>
+    </div>
+    <div class="reviewers-row">${reviewerChips}</div>
+  `;
 
-    let lastMonth = '';
-    withComments.forEach(({t, comments}) => {
-      const month = defaultTournaments.find(x=>x.id===t.id)?.month || 'Other';
-      if(month !== lastMonth) { html += `<div class="section-label">${esc(month)}</div>`; lastMonth = month; }
-      const iconHtml = t.flag ? `<span class="t-flag">${t.flag}</span>` : '';
-      const commentsHtml = comments.map(c=>`<div class="admin-comment"><div class="admin-comment-author">${esc(c.author)}</div><div class="comment-text">${esc(c.text)}</div></div>`).join('');
-      html += `<div class="admin-card"><div class="admin-card-header">${iconHtml}<span class="admin-card-name">${esc(t.name||t.id)}</span></div>${commentsHtml}</div>`;
+  if(withComments.length===0&&allSuggested.length===0){
+    html+=`<div class="empty-admin" style="padding:20px">Reviews received but no comments or suggestions yet.</div>`;
+  } else {
+    let lastMonth='';
+    withComments.forEach(({t,comments})=>{
+      const month=defaultTournaments.find(x=>x.id===t.id)?.month||'Other';
+      if(month!==lastMonth){html+=`<div class="section-label">${esc(month)}</div>`;lastMonth=month;}
+      const iconHtml=t.flag?`<span class="t-flag">${t.flag}</span>`:'';
+      const commentsHtml=comments.map(c=>`<div class="admin-comment"><div class="admin-comment-author">${esc(c.author)}</div><div class="comment-text">${esc(c.text)}</div></div>`).join('');
+      html+=`<div class="admin-card"><div class="admin-card-header">${iconHtml}<span class="admin-card-name">${esc(t.name||t.id)}</span></div>${commentsHtml}</div>`;
     });
-
-    if(allSuggested.length > 0) {
-      html += `<div class="section-label">Suggested competitions</div>`;
-      allSuggested.forEach(s => {
-        html += `<div class="admin-card"><div class="admin-card-header"><span class="t-flag">➕</span><span class="admin-card-name">${esc(s.name)}<span class="suggested-tag">by ${esc(s.by)}</span></span></div>
-          <div class="card-meta" style="font-size:12px;color:var(--text2)">${esc(s.meta)}</div>
-          ${s.desc&&s.desc!=='—'?`<div class="card-desc" style="margin-top:6px">${esc(s.desc)}</div>`:''}
+    if(allSuggested.length>0){
+      html+=`<div class="section-label">Suggested competitions</div>`;
+      allSuggested.forEach(s=>{
+        html+=`<div class="admin-card"><div class="admin-card-header"><span class="t-flag">➕</span><span class="admin-card-name">${esc(s.name)}<span class="suggested-tag">by ${esc(s.by)}</span></span></div>
+          <div class="card-meta" style="font-size:12px;color:var(--text2);margin-top:4px">${esc(s.meta)}</div>
+          ${s.desc&&s.desc!=='—'?`<div class="card-desc" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">${esc(s.desc)}</div>`:''}
         </div>`;
       });
     }
-
-    return html;
   }
 
-  render();
+  html+=`<div style="margin-top:20px"><button class="refresh-btn" onclick="loadAdmin()"><i class="ti ti-refresh"></i> Refresh</button></div>`;
+  app.innerHTML=html;
+
+  document.getElementById('copy-ai-btn').onclick=()=>{
+    const lines=[];
+    lines.push('TOURNAMENT REVIEW FEEDBACK — '+new Date().toLocaleDateString());
+    lines.push('Reviewers: '+reviews.map(r=>r.name).join(', '));
+    lines.push('='.repeat(50));
+
+    withComments.forEach(({t,comments})=>{
+      lines.push('');
+      lines.push('TOURNAMENT: '+( t.name||t.id));
+      comments.forEach(c=>lines.push('  ['+c.author+']: '+c.text));
+    });
+
+    if(allSuggested.length>0){
+      lines.push('');
+      lines.push('SUGGESTED COMPETITIONS:');
+      allSuggested.forEach(s=>{
+        lines.push('  ['+s.by+'] '+s.name+' ('+s.meta+')');
+        if(s.desc&&s.desc!=='—') lines.push('    → '+s.desc);
+      });
+    }
+
+    lines.push('');
+    lines.push('='.repeat(50));
+    lines.push('TASK: Review these comments and (1) identify common themes, (2) suggest which tournaments should be in the MVP, and (3) flag any concerns or missing competitions.');
+
+    const text=lines.join('\n');
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(()=>showToast('Copied! Paste into Claude or ChatGPT'));
+    } else {
+      const ta=document.createElement('textarea');
+      ta.value=text;ta.style.cssText='position:fixed;opacity:0';
+      document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+      showToast('Copied! Paste into Claude or ChatGPT');
+    }
+  };
 }
 </script>
 </body>
