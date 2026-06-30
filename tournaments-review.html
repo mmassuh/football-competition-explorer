@@ -73,6 +73,11 @@ select{width:100%;background:var(--surface2);border:1px solid var(--border);bord
 .submit-all:active{opacity:.8}
 .submit-hint{font-size:12px;color:var(--text3);text-align:center}
 
+.legend{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:20px;display:flex;flex-direction:column;gap:10px}
+.legend-title{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.legend-row{display:flex;align-items:flex-start;gap:10px}
+.legend-row .badge{flex-shrink:0;margin-top:1px}
+.legend-desc{font-size:12px;color:var(--text2);line-height:1.5}
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 20px;border-radius:var(--r);font-size:13px;font-weight:500;opacity:0;transition:opacity .3s;pointer-events:none;z-index:100;white-space:nowrap}
 .toast.show{opacity:1}
 </style>
@@ -90,6 +95,18 @@ select{width:100%;background:var(--surface2);border:1px solid var(--border);bord
 <div class="top-note">
   <div class="warn-title">⚠ IMPORTANT — ACTION REQUIRED</div>
   Build a <strong>tournament navigator</strong> so users can switch between competitions inside the app. This is missing before we can support any tournament beyond World Cup 2026.
+</div>
+
+<div class="legend">
+  <div class="legend-title">Status guide</div>
+  <div class="legend-row">
+    <span class="badge badge-ok">✅ Ready</span>
+    <span class="legend-desc">The app already supports this format (tables, groups, knockout bracket). No extra dev needed to display this tournament.</span>
+  </div>
+  <div class="legend-row">
+    <span class="badge badge-warn">⚠️ Needs work</span>
+    <span class="legend-desc">The tournament uses a format we don't fully support yet — custom brackets, conference playoffs, or a 36-team league phase. Extra dev required.</span>
+  </div>
 </div>
 
 <div id="tournaments"></div>
