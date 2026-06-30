@@ -149,14 +149,6 @@ select,input{font-family:inherit;font-size:12px}
 .d-li{padding:7px 10px;background:var(--surface-2);border-radius:var(--r);font-size:11px;color:var(--text-2);line-height:1.55;border-left:2px solid var(--border-hi)}
 .d-li.ux{border-left-color:var(--accent)}
 .d-li.edge{border-left-color:var(--yellow)}
-.d-participants-note{font-size:11px;color:var(--text-3);margin-bottom:8px;line-height:1.5;font-style:italic}
-.d-participants{display:flex;flex-direction:column;gap:4px}
-.d-participant{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--surface-2);border-radius:var(--r);border-left:2px solid var(--border-hi)}
-.d-p-flag{font-size:16px;line-height:1;flex-shrink:0;margin-top:1px}
-.d-p-info{flex:1;min-width:0}
-.d-p-country{font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
-.d-p-spots{font-size:10px;font-weight:500;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);padding:1px 5px;border-radius:3px}
-.d-p-via{font-size:11px;color:var(--text-3);margin-top:2px;line-height:1.4}
 .d-badges{display:flex;flex-wrap:wrap;gap:4px}
 
 /* ── FORMATS TAB ── */
@@ -213,7 +205,29 @@ select,input{font-family:inherit;font-size:12px}
 </style>
 </head>
 <body>
-<div id="app"></div>
+<div id="tr-gate" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:#0d0f1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <div style="width:100%;max-width:320px">
+    <div style="font-size:22px;font-weight:700;margin-bottom:4px;color:#e2e6f8">Football Competition Explorer</div>
+    <div style="font-size:13px;color:#8891b5;margin-bottom:24px">Enter password to continue</div>
+    <input type="password" id="tr-gate-input" placeholder="Password" onkeydown="if(event.key==='Enter')trCheckGate()" style="width:100%;background:#141727;border:1px solid #272c47;border-radius:8px;padding:10px 12px;color:#e2e6f8;font-size:14px;outline:none;margin-bottom:10px" />
+    <button onclick="trCheckGate()" style="width:100%;padding:12px;font-size:14px;font-weight:600;background:#5468ff;color:#fff;border:none;border-radius:8px;cursor:pointer">Continue</button>
+    <div id="tr-gate-err" style="font-size:12px;color:#dc2626;margin-top:10px;text-align:center;display:none">Incorrect password</div>
+  </div>
+</div>
+<div id="app" style="display:none"></div>
+<script>
+const _TR_HASH = '8a974322dbf4da39a09b2cb9c77c378cc8027824a3fb9d83f63e23bedcf01a58';
+const _TR_KEY  = 'tappp-auth';
+async function trCheckGate(){
+  const val = document.getElementById('tr-gate-input').value;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
+  const hash = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  if(hash===_TR_HASH){ sessionStorage.setItem(_TR_KEY,'1'); trUnlock(); }
+  else { document.getElementById('tr-gate-err').style.display='block'; document.getElementById('tr-gate-input').value=''; document.getElementById('tr-gate-input').focus(); }
+}
+function trUnlock(){ document.getElementById('tr-gate').style.display='none'; document.getElementById('app').style.display='block'; }
+if(sessionStorage.getItem(_TR_KEY)==='1') trUnlock();
+</script>
 <script>
 /* ═══════════════════════════════════════════════════════════
    DATA
@@ -609,22 +623,7 @@ const COMPETITIONS = [
     standings:true, groups:true, bracket:true, playoffs:false, promo_rel:false, two_legs:true,
     modules:['group_standings','phase_nav','bracket','two_leg_aggregate','leg_context','penalty_display','awards'],
     description:'South America\'s premier club competition. Preliminary phases feed into a group stage (8 groups of 4) then two-leg knockout rounds through to the final (single match at a neutral venue since 2019). Runs Feb–Nov alongside domestic seasons.',
-    key_facts:[['Groups','8 groups of 4'],['Advance','Top 2 per group'],['KO Rounds','Two-leg until Final'],['Final','Single match, neutral'],['Season','Feb – Nov (calendar year)'],['Total Participants','~47 clubs']],
-    participants:{
-      note:'CONMEBOL members only. MLS and other non-CONMEBOL clubs do not participate. Brazil and Argentina receive extra spots when they hold the defending Libertadores/Sudamericana title.',
-      by_country:[
-        {country:'Brazil',        flag:'🇧🇷', spots:'7',  via:'Brasileirão top finishers + Copa do Brasil winner'},
-        {country:'Argentina',     flag:'🇦🇷', spots:'6',  via:'Liga Profesional champions (Apertura + Clausura) + Copa Argentina + others by league position'},
-        {country:'Colombia',      flag:'🇨🇴', spots:'4',  via:'Liga BetPlay champions + Copa Colombia winner + top finishers'},
-        {country:'Chile',         flag:'🇨🇱', spots:'4',  via:'Primera División champion + runners-up + Copa Chile winner'},
-        {country:'Ecuador',       flag:'🇪🇨', spots:'4',  via:'LigaPro champion + runners-up + Copa Ecuador'},
-        {country:'Uruguay',       flag:'🇺🇾', spots:'4',  via:'Apertura + Clausura champions + Copa Uruguay + league position'},
-        {country:'Paraguay',      flag:'🇵🇾', spots:'4',  via:'Apertura + Clausura champions + Copa Paraguay + others'},
-        {country:'Peru',          flag:'🇵🇪', spots:'4',  via:'Liga 1 champion + runners-up + Copa Bicentenario'},
-        {country:'Bolivia',       flag:'🇧🇴', spots:'4',  via:'Apertura + Clausura champions + Copa Bolivia + others'},
-        {country:'Venezuela',     flag:'🇻🇪', spots:'4',  via:'Apertura + Clausura champions + Copa Venezuela + others'},
-      ],
-    },
+    key_facts:[['Groups','8 groups of 4'],['Advance','Top 2 per group'],['KO Rounds','Two-leg until Final'],['Final','Single match, neutral'],['Season','Feb – Nov (calendar year)']],
     ux_implications:[
       'Group stage with 8 groups is the primary navigation hub — group selector is essential.',
       'All knockout rounds up to and including semi-finals are two-leg — aggregate display always required.',
@@ -644,22 +643,7 @@ const COMPETITIONS = [
     standings:true, groups:true, bracket:true, playoffs:false, promo_rel:false, two_legs:true,
     modules:['group_standings','phase_nav','bracket','two_leg_aggregate','leg_context','penalty_display'],
     description:'CONMEBOL\'s secondary club competition. Similar structure to Libertadores with group stage and two-leg knockout rounds. Winner qualifies for the Copa Libertadores the following year and the Recopa Sudamericana.',
-    key_facts:[['Format','Group stage + two-leg KO'],['Groups','8 groups of 4'],['Teams','32 + 4 Libertadores drops'],['Winner','Qualifies for Libertadores']],
-    participants:{
-      note:'CONMEBOL members only (same 10 South American FAs as Libertadores). Plus 4 clubs eliminated in Copa Libertadores Phase 3 enter Sudamericana mid-competition.',
-      by_country:[
-        {country:'Brazil',    flag:'🇧🇷', spots:'7',  via:'Brasileirão finishers not in Libertadores + Copa do Brasil runner-up'},
-        {country:'Argentina', flag:'🇦🇷', spots:'6',  via:'Liga Profesional clubs not qualifying for Libertadores + Copa Argentina runner-up'},
-        {country:'Colombia',  flag:'🇨🇴', spots:'4',  via:'Liga BetPlay clubs + Copa Colombia runner-up'},
-        {country:'Chile',     flag:'🇨🇱', spots:'3',  via:'Primera División clubs not in Libertadores + Copa Chile runner-up'},
-        {country:'Ecuador',   flag:'🇪🇨', spots:'3',  via:'LigaPro clubs not in Libertadores'},
-        {country:'Uruguay',   flag:'🇺🇾', spots:'2',  via:'League clubs not qualifying for Libertadores'},
-        {country:'Paraguay',  flag:'🇵🇾', spots:'2',  via:'Apertura/Clausura clubs not in Libertadores'},
-        {country:'Peru',      flag:'🇵🇪', spots:'2',  via:'Liga 1 clubs not qualifying for Libertadores'},
-        {country:'Bolivia',   flag:'🇧🇴', spots:'2',  via:'Apertura/Clausura clubs not in Libertadores'},
-        {country:'Venezuela', flag:'🇻🇪', spots:'2',  via:'Apertura/Clausura clubs not in Libertadores'},
-      ],
-    },
+    key_facts:[['Format','Group stage + two-leg KO'],['Groups','8 groups of 4'],['Winner','Qualifies for Libertadores']],
     ux_implications:['Identical structural model to Copa Libertadores. Groups of teams who were eliminated from Libertadores may also enter — cross-competition pathways.'],
     edge_cases:['Clubs eliminated from Copa Libertadores group stage drop into Copa Sudamericana knockout rounds — creates mid-competition entries.'],
   },
@@ -671,17 +655,7 @@ const COMPETITIONS = [
     standings:false, groups:false, bracket:true, playoffs:false, promo_rel:false, two_legs:true,
     modules:['bracket','two_leg_aggregate','leg_context','penalty_display'],
     description:'North and Central America\'s premier club competition. Pure two-leg knockout from the Round of 32 through to the Final. MLS clubs compete against Liga MX clubs, creating the "Leagues Cup" crossover narrative.',
-    key_facts:[['Teams','27'],['Format','Two-leg KO all rounds'],['Season','Feb – Apr'],['MLS vs LigaMX','Key rivalry'],['Zones','North America 18 + Central America 6 + Caribbean 3']],
-    participants:{
-      note:'27 clubs from across CONCACAF, distributed by zone. Spots earned via domestic league performance and confederation sub-tournaments (Central American Cup, Caribbean Cup).',
-      by_country:[
-        {country:'USA (MLS)',           flag:'🇺🇸', spots:'9',  via:'MLS Cup winner + Supporters\' Shield + US Open Cup + allocation spots by MLS standing'},
-        {country:'Mexico (Liga MX)',    flag:'🇲🇽', spots:'6',  via:'Apertura champion + Clausura champion + top 4 clubs by accumulated points'},
-        {country:'Canada (CPL)',        flag:'🇨🇦', spots:'3',  via:'CPL champion + 2 allocation spots'},
-        {country:'Central America',     flag:'🌎',  spots:'6',  via:'4 semi-finalists of CONCACAF Central American Cup (Honduras, Guatemala, Costa Rica, El Salvador typically)'},
-        {country:'Caribbean',           flag:'🏝️',  spots:'3',  via:'Caribbean Cup winner (Round of 16 bye) + runner-up + 3rd place (Jamaica, Trinidad & Tobago, Dominican Rep. typically)'},
-      ],
-    },
+    key_facts:[['Teams','27'],['Format','Two-leg KO all rounds'],['Season','Feb – Apr'],['MLS vs LigaMX','Key rivalry']],
     ux_implications:['All rounds are two-leg — aggregate display is always required. No group stage navigation needed.'],
     edge_cases:['MLS and Liga MX clubs are on different seasonal calendars — MLS clubs play this mid-pre-season while Liga MX clubs are mid-Clausura.'],
   },
@@ -1214,10 +1188,6 @@ const CONF_COUNTRIES = {
   670:'North America',740:'North America',780:'North America',850:'North America',
   60:'North America',92:'North America',136:'North America',531:'North America',
   533:'North America',
-  // French overseas territories in the Caribbean/Americas → CONCACAF members
-  312:'North America',  // Guadeloupe
-  474:'North America',  // Martinique
-  254:'North America',  // French Guiana (CONCACAF member since 2013)
   // CAF – Africa
   12:'Africa',24:'Africa',204:'Africa',72:'Africa',854:'Africa',108:'Africa',
   132:'Africa',120:'Africa',140:'Africa',148:'Africa',174:'Africa',178:'Africa',
@@ -1228,9 +1198,8 @@ const CONF_COUNTRIES = {
   562:'Africa',566:'Africa',646:'Africa',686:'Africa',694:'Africa',706:'Africa',
   710:'Africa',728:'Africa',729:'Africa',834:'Africa',768:'Africa',788:'Africa',
   800:'Africa',894:'Africa',716:'Africa',678:'Africa',690:'Africa',480:'Africa',
-  638:'Africa',  // Réunion (French overseas territory, CAF member)
   // AFC – Asia (incl. Australia since 2006)
-  4:'Asia',48:'Asia',50:'Asia',64:'Asia',96:'Asia',116:'Asia',
+  4:'Asia',36:'Asia',48:'Asia',50:'Asia',64:'Asia',96:'Asia',116:'Asia',
   156:'Asia',344:'Asia',356:'Asia',360:'Asia',364:'Asia',368:'Asia',392:'Asia',
   400:'Asia',414:'Asia',417:'Asia',418:'Asia',422:'Asia',446:'Asia',458:'Asia',
   462:'Asia',496:'Asia',104:'Asia',524:'Asia',408:'Asia',512:'Asia',586:'Asia',
@@ -1238,7 +1207,7 @@ const CONF_COUNTRIES = {
   760:'Asia',762:'Asia',764:'Asia',784:'Asia',860:'Asia',704:'Asia',887:'Asia',
   626:'Asia',158:'Asia',
   // OFC – Oceania
-  36:'Oceania',242:'Oceania',554:'Oceania',598:'Oceania',882:'Oceania',90:'Oceania',
+  242:'Oceania',554:'Oceania',598:'Oceania',882:'Oceania',90:'Oceania',
   776:'Oceania',548:'Oceania',258:'Oceania',540:'Oceania',16:'Oceania',184:'Oceania',
 };
 
@@ -1316,7 +1285,7 @@ const REGION_META = {
   'Europe':        { conf:'UEFA',     color:'#5468ff', dim:'#0a1238', lx:448, ly:97  },
   'Africa':        { conf:'CAF',      color:'#f97316', dim:'#2a1002', lx:455, ly:240 },
   'Asia':          { conf:'AFC',      color:'#a855f7', dim:'#180a38', lx:660, ly:112 },
-  'Oceania':       { conf:'OFC',      color:'#06b6d4', dim:'#032428', lx:728, ly:278 },
+  'Oceania':       { conf:'OFC',      color:'#06b6d4', dim:'#032428', lx:730, ly:292 },
 };
 
 // Approximate map dot positions (SVG xy) per competition id
@@ -1599,22 +1568,6 @@ function renderDetail() {
           <div class="d-item"><div class="d-il">Participant</div><div class="d-iv">${c.participant==='club'?'Clubs':'National Teams'}</div></div>
         </div>
       </div>
-
-      ${c.participants ? `
-      <div class="d-sec">
-        <div class="d-sec-title">Participating Countries</div>
-        ${c.participants.note ? `<div class="d-participants-note">${c.participants.note}</div>` : ''}
-        <div class="d-participants">
-          ${(c.participants.by_country||[]).map(p=>`
-            <div class="d-participant">
-              <span class="d-p-flag">${p.flag}</span>
-              <div class="d-p-info">
-                <div class="d-p-country">${p.country} <span class="d-p-spots">${p.spots} spot${p.spots==='1'?'':'s'}</span></div>
-                <div class="d-p-via">${p.via}</div>
-              </div>
-            </div>`).join('')}
-        </div>
-      </div>` : ''}
 
       ${renderMiniMap(c.region)}
 
@@ -1974,7 +1927,7 @@ let worldLoaded = false;
 
 async function loadWorldMap() {
   try {
-    const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json');
+    const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
     const topo = await res.json();
     const W = 840, H = 440;
 
@@ -2014,25 +1967,10 @@ async function loadWorldMap() {
     if (borderMesh.type === 'LineString') worldBorderPath = line2d(borderMesh.coordinates);
     else if (borderMesh.type === 'MultiLineString') worldBorderPath = borderMesh.coordinates.map(line2d).join(' ');
 
-    // Countries to skip from confederation overlays because their territory spans the
-    // anti-meridian or projects into unexpected hemispheres, causing visual artifacts:
-    // Russia (643): Far East / Chukotka appears at x≈23, overlapping Alaska/Canada
-    // Fiji (242): Islands straddle ±180°, fragments appear at map edges
-    // Kiribati (296): Straddles date line
-    // US Minor Islands (581): scattered Pacific, mostly east of date line
-    // Countries excluded from confederation overlays to avoid visual artifacts:
-    // 643 Russia: Far East (Chukotka) projects to x≈23, overlapping Alaska/Canada on map
-    // 36 Australia: AFC member since 2006 but geographically Oceania — including it in
-    //    Asia overlay makes it overlap with OFC region visually
-    // 242 Fiji / 296 Kiribati: straddle ±180° date line, fragments appear at map edges
-    const CONF_SKIP = new Set([643, 242, 296, 581]);
-
     // Merge countries by confederation → accurate region shapes
     const confPaths = {};
     Object.keys(REGION_META).forEach(region => {
-      const geoms = topo.objects.countries.geometries.filter(g =>
-        CONF_COUNTRIES[+g.id] === region && !CONF_SKIP.has(+g.id)
-      );
+      const geoms = topo.objects.countries.geometries.filter(g => CONF_COUNTRIES[+g.id] === region);
       if (!geoms.length) return;
       try {
         const merged = topojson.merge(topo, geoms);
