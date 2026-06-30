@@ -37,7 +37,10 @@ h1{font-size:18px;font-weight:600;margin-bottom:4px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
 .card.user-added{border-left:3px solid var(--blue)}
 .card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px}
+.card-name-row{display:flex;align-items:center;gap:8px;min-width:0}
 .card-name{font-size:14px;font-weight:600;color:var(--text);line-height:1.3}
+.t-flag{font-size:20px;line-height:1;flex-shrink:0}
+.t-logo{width:28px;height:28px;object-fit:contain;flex-shrink:0;filter:brightness(0) invert(1);opacity:.85}
 .badge{font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0}
 .badge-ok{background:var(--green-bg);color:var(--green)}
 .badge-warn{background:var(--amber-bg);color:var(--amber)}
@@ -153,17 +156,17 @@ select{width:100%;background:var(--surface2);border:1px solid var(--border);bord
 const STORAGE_KEY = 'tournaments-review-v1';
 
 const defaultTournaments = [
-  {id:'brasileirao',month:'July',name:'Brasileirão Serie A 2026',type:'ok',meta:'Resumes Jul 16–22 · Single table · 20 teams',desc:'Paused for the World Cup since May. Full season ends Dec 2. Groups view works as-is.'},
-  {id:'mls',month:'July',name:'MLS 2026',type:'warn',meta:'Resumes Jul 16–17 · 2 conferences',desc:'Regular season table works fine. Playoffs use a custom conference bracket — needs extra work.'},
-  {id:'sudamericana',month:'July',name:'Copa Sudamericana 2026',type:'ok',meta:'Jul 21 — Round of 16 · Knockout only',desc:'Group stage finished. Knockout bracket works perfectly from R16 to final.'},
-  {id:'betplay',month:'July',name:'Liga BetPlay Colombia — Clausura',type:'ok',meta:'Jul 24 → Nov · 2 groups of 10',desc:'Two groups of 10, then cuadrangulares (2 groups of 4), then a two-legged final. All phases fit the current app.'},
-  {id:'libertadores',month:'August',name:'Copa Libertadores 2026',type:'ok',meta:'Aug 11 — Round of 16 · Knockout only',desc:'Biggest club tournament in LATAM. Group stage done — only knockouts remain. Bracket view works perfectly.'},
-  {id:'argentina',month:'August',name:'Liga Profesional Argentina — Clausura',type:'ok',meta:'~Aug (TBD) · Single table · 28 teams',desc:'Date not yet confirmed. One big table, no knockout. Groups view works as-is.'},
-  {id:'laliga',month:'August',name:'La Liga 2026–27',type:'ok',meta:'Aug 15–16 · Single table · 20 teams',desc:'Huge LATAM audience (Mbappé, Vinicius, etc.). Standard single table — no changes needed.'},
-  {id:'premier',month:'August',name:'Premier League 2026–27',type:'ok',meta:'Aug 21 · Single table · 20 teams',desc:'Starts one week later than usual — post-World Cup recovery. No changes needed.'},
-  {id:'seriea',month:'August',name:'Serie A 2026–27',type:'ok',meta:'Aug 22–23 · Single table · 20 teams',desc:'Strong LATAM following. Standard table, no changes needed.'},
-  {id:'ligue1',month:'August',name:'Ligue 1 2026–27',type:'ok',meta:'Aug 23 · Single table · 18 teams',desc:'Lower LATAM interest but worth including. Standard table.'},
-  {id:'ucl',month:'September',name:'UEFA Champions League 2026–27',type:'warn',meta:'Sep 8 — league phase · 36-team table + knockout',desc:'New format: 36 clubs in one big table (8 games each), then R16 knockout. Needs adjustments for 36 teams.'},
+  {id:'brasileirao',month:'July',name:'Brasileirão Serie A 2026',type:'ok',meta:'Resumes Jul 16–22 · Single table · 20 teams',desc:'Paused for the World Cup since May. Full season ends Dec 2. Groups view works as-is.',flag:'🇧🇷'},
+  {id:'mls',month:'July',name:'MLS 2026',type:'warn',meta:'Resumes Jul 16–17 · 2 conferences',desc:'Regular season table works fine. Playoffs use a custom conference bracket — needs extra work.',flag:'🇺🇸'},
+  {id:'sudamericana',month:'July',name:'Copa Sudamericana 2026',type:'ok',meta:'Jul 21 — Round of 16 · Knockout only',desc:'Group stage finished. Knockout bracket works perfectly from R16 to final.',logo:'https://upload.wikimedia.org/wikipedia/en/f/f7/Copa_Sudamericana_logo.svg'},
+  {id:'betplay',month:'July',name:'Liga BetPlay Colombia — Clausura',type:'ok',meta:'Jul 24 → Nov · 2 groups of 10',desc:'Two groups of 10, then cuadrangulares (2 groups of 4), then a two-legged final. All phases fit the current app.',flag:'🇨🇴'},
+  {id:'libertadores',month:'August',name:'Copa Libertadores 2026',type:'ok',meta:'Aug 11 — Round of 16 · Knockout only',desc:'Biggest club tournament in LATAM. Group stage done — only knockouts remain. Bracket view works perfectly.',logo:'https://upload.wikimedia.org/wikipedia/en/1/14/Copa_Libertadores_logo.svg'},
+  {id:'argentina',month:'August',name:'Liga Profesional Argentina — Clausura',type:'ok',meta:'~Aug (TBD) · Single table · 28 teams',desc:'Date not yet confirmed. One big table, no knockout. Groups view works as-is.',flag:'🇦🇷'},
+  {id:'laliga',month:'August',name:'La Liga 2026–27',type:'ok',meta:'Aug 15–16 · Single table · 20 teams',desc:'Huge LATAM audience (Mbappé, Vinicius, etc.). Standard single table — no changes needed.',flag:'🇪🇸'},
+  {id:'premier',month:'August',name:'Premier League 2026–27',type:'ok',meta:'Aug 21 · Single table · 20 teams',desc:'Starts one week later than usual — post-World Cup recovery. No changes needed.',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
+  {id:'seriea',month:'August',name:'Serie A 2026–27',type:'ok',meta:'Aug 22–23 · Single table · 20 teams',desc:'Strong LATAM following. Standard table, no changes needed.',flag:'🇮🇹'},
+  {id:'ligue1',month:'August',name:'Ligue 1 2026–27',type:'ok',meta:'Aug 23 · Single table · 18 teams',desc:'Lower LATAM interest but worth including. Standard table.',flag:'🇫🇷'},
+  {id:'ucl',month:'September',name:'UEFA Champions League 2026–27',type:'warn',meta:'Sep 8 — league phase · 36-team table + knockout',desc:'New format: 36 clubs in one big table (8 games each), then R16 knockout. Needs adjustments for 36 teams.',logo:'https://upload.wikimedia.org/wikipedia/en/b/bf/UEFA_Champions_League_logo_2.svg'},
 ];
 
 let state = load();
@@ -304,6 +307,12 @@ function renderAll() {
     const badgeLabel = t.type === 'ok' ? '✅ Ready' : '⚠️ Needs work';
     const badgeCls = t.userAdded ? 'badge-user' : (t.type === 'ok' ? 'badge-ok' : 'badge-warn');
 
+    const iconHtml = t.logo
+      ? `<img src="${t.logo}" class="t-logo" alt="" onerror="this.style.display='none'">`
+      : t.flag
+        ? `<span class="t-flag">${t.flag}</span>`
+        : '';
+
     const formHtml = state.openForms[t.id]
       ? `<div class="comment-form">
            <textarea id="ta-${t.id}" placeholder="Your comment..."></textarea>
@@ -313,7 +322,7 @@ function renderAll() {
 
     html += `<div class="card${t.userAdded?' user-added':''}">
       <div class="card-header">
-        <span class="card-name">${escHtml(t.name)}</span>
+        <div class="card-name-row">${iconHtml}<span class="card-name">${escHtml(t.name)}</span></div>
         <span class="badge ${badgeCls}">${t.userAdded ? '➕ Suggested' : badgeLabel}</span>
       </div>
       <div class="card-meta">${escHtml(t.meta)}</div>
