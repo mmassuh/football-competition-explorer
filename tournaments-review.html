@@ -142,11 +142,11 @@ const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 const HEADERS = { 'Content-Type':'application/json', 'X-Master-Key': API_KEY, 'X-Bin-Versioning': 'false' };
 
 const defaultTournaments = [
-  {id:'brasileirao',month:'July',name:'Brasileirão Serie A 2026',type:'ok',meta:'Resumes Jul 22 · Single table · 20 teams',desc:'Paused since May for the World Cup. Returns Jul 22 (round 19). Full season ends Dec 2. Groups view works as-is.',flag:'🇧🇷'},
   {id:'mls',month:'July',name:'MLS 2026',type:'warn',meta:'Resumes Jul 16–17 · 2 conferences',desc:'Restarts Jul 16–17 — deliberately scheduled before the WC Final on Jul 19. Playoffs use a custom conference bracket — needs extra work.',flag:'🇺🇸'},
   {id:'sudamericana',month:'July',name:'Copa Sudamericana 2026',type:'ok',meta:'Jul 21 playoffs · R16 from Aug 11 · Knockout',desc:'Jul 21–30: playoff round (Libertadores 3rd vs Sudamericana 2nd). R16 first legs Aug 11–13, second legs Aug 18–20.',flag:'🏆'},
-  {id:'betplay',month:'July',name:'Liga BetPlay Colombia — Clausura',type:'ok',meta:'Jul 24 → Nov · 2 groups of 10',desc:'Opens Jul 24. Two groups of 10, then cuadrangulares (2 groups of 4), then a two-legged final. All phases fit the current app.',flag:'🇨🇴'},
+  {id:'brasileirao',month:'July',name:'Brasileirão Serie A 2026',type:'ok',meta:'Resumes Jul 22 · Single table · 20 teams',desc:'Paused since May for the World Cup. Returns Jul 22 (round 19). Full season ends Dec 2. Groups view works as-is.',flag:'🇧🇷'},
   {id:'argentina',month:'July',name:'Liga Profesional Argentina — Clausura',type:'ok',meta:'Jul 23 · Single table · 28 teams',desc:'Confirmed start Jul 23. River debuts Jul 25, Boca on Jul 27. One big table, no knockout. Groups view works as-is.',flag:'🇦🇷'},
+  {id:'betplay',month:'July',name:'Liga BetPlay Colombia — Clausura',type:'ok',meta:'Jul 24 → Nov · 2 groups of 10',desc:'Opens Jul 24. Two groups of 10, then cuadrangulares (2 groups of 4), then a two-legged final. All phases fit the current app.',flag:'🇨🇴'},
   {id:'libertadores',month:'August',name:'Copa Libertadores 2026',type:'ok',meta:'Aug 11 — Round of 16 · Knockout only',desc:'Biggest club tournament in LATAM. R16 first legs Aug 11–13, second legs Aug 18–20. Bracket view works perfectly.',flag:'🏆'},
   {id:'laliga',month:'August',name:'La Liga 2026–27',type:'ok',meta:'Aug 15–16 · Single table · 20 teams',desc:'Huge LATAM audience (Mbappé, Vinicius, etc.). Standard single table — no changes needed.',flag:'🇪🇸'},
   {id:'premier',month:'August',name:'Premier League 2026–27',type:'ok',meta:'Aug 21 · Single table · 20 teams',desc:'Starts one week later than usual — post-World Cup recovery. No changes needed.',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
