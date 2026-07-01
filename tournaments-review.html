@@ -39,6 +39,15 @@ h1{font-size:18px;font-weight:600;margin-bottom:4px}
 .comment-author{font-weight:600;font-size:11px;margin-bottom:3px;color:var(--blue)}
 .comment-text{color:var(--text)}
 .no-comments{font-size:12px;color:var(--text3);font-style:italic;margin-bottom:8px}
+.fixtures-toggle{font-size:12px;color:var(--text2);background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.fixtures-toggle .fx-arrow{margin-left:auto;transition:transform .2s}
+.fixtures-toggle.open .fx-arrow{transform:rotate(180deg)}
+.fixtures-body{display:none;background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12px}
+.fixtures-body.open{display:block}
+.fx-round{font-weight:600;color:var(--text2);margin-top:8px;margin-bottom:4px;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.fx-round:first-child{margin-top:0}
+.fx-game{color:var(--text);padding:3px 0;border-bottom:1px solid var(--border)}
+.fx-game:last-child{border-bottom:none}
 .toggle-btn{font-size:12px;color:var(--text2);background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:6px}
 .comment-form{display:flex;flex-direction:column;gap:8px;margin-top:4px}
 textarea,input[type=text]{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none}
@@ -142,18 +151,56 @@ const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 const HEADERS = { 'Content-Type':'application/json', 'X-Master-Key': API_KEY, 'X-Bin-Versioning': 'false' };
 
 const defaultTournaments = [
-  {id:'mls',month:'July',name:'MLS 2026',type:'warn',meta:'Resumes Jul 16–17 · 2 conferences',desc:'Restarts Jul 16–17 — deliberately scheduled before the WC Final on Jul 19. Playoffs use a custom conference bracket — needs extra work.',flag:'🇺🇸'},
-  {id:'sudamericana',month:'July',name:'Copa Sudamericana 2026',type:'ok',meta:'Jul 21 playoffs · R16 from Aug 11 · Knockout',desc:'Jul 21–30: playoff round (Libertadores 3rd vs Sudamericana 2nd). R16 first legs Aug 11–13, second legs Aug 18–20.',flag:'🏆'},
-  {id:'brasileirao',month:'July',name:'Brasileirão Serie A 2026',type:'ok',meta:'Resumes Jul 22 · Single table · 20 teams',desc:'Paused since May for the World Cup. Returns Jul 22 (round 19). Full season ends Dec 2. Groups view works as-is.',flag:'🇧🇷'},
-  {id:'argentina',month:'July',name:'Liga Profesional Argentina — Clausura',type:'ok',meta:'Jul 23 · Single table · 28 teams',desc:'Confirmed start Jul 23. River debuts Jul 25, Boca on Jul 27. One big table, no knockout. Groups view works as-is.',flag:'🇦🇷'},
-  {id:'betplay',month:'July',name:'Liga BetPlay Colombia — Clausura',type:'ok',meta:'Jul 24 → Nov · 2 groups of 10',desc:'Opens Jul 24. Two groups of 10, then cuadrangulares (2 groups of 4), then a two-legged final. All phases fit the current app.',flag:'🇨🇴'},
-  {id:'libertadores',month:'August',name:'Copa Libertadores 2026',type:'ok',meta:'Aug 11 — Round of 16 · Knockout only',desc:'Biggest club tournament in LATAM. R16 first legs Aug 11–13, second legs Aug 18–20. Bracket view works perfectly.',flag:'🏆'},
-  {id:'laliga',month:'August',name:'La Liga 2026–27',type:'ok',meta:'Aug 15–16 · Single table · 20 teams',desc:'Huge LATAM audience (Mbappé, Vinicius, etc.). Standard single table — no changes needed.',flag:'🇪🇸'},
-  {id:'premier',month:'August',name:'Premier League 2026–27',type:'ok',meta:'Aug 21 · Single table · 20 teams',desc:'Starts one week later than usual — post-World Cup recovery. No changes needed.',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
-  {id:'seriea',month:'August',name:'Serie A 2026–27',type:'ok',meta:'Aug 22–23 · Single table · 20 teams',desc:'Strong LATAM following. Standard table, no changes needed.',flag:'🇮🇹'},
-  {id:'ligue1',month:'August',name:'Ligue 1 2026–27',type:'ok',meta:'Aug 23 · Single table · 18 teams',desc:'Lower LATAM interest but worth including. Standard table.',flag:'🇫🇷'},
-  {id:'bundesliga',month:'August',name:'Bundesliga 2026–27',type:'ok',meta:'Aug 28 · Single table · 18 teams',desc:'Strong LATAM following (many top players). Standard single table — no changes needed.',flag:'🇩🇪'},
-  {id:'ucl',month:'September',name:'UEFA Champions League 2026–27',type:'warn',meta:'Sep 8 — league phase · 36-team table + knockout',desc:'New format: 36 clubs in one big table (8 games each), then R16 knockout. Needs adjustments for 36 teams.',flag:'🏆'},
+  {id:'mls',month:'July',name:'MLS 2026',type:'warn',meta:'Resumes Jul 16–17 · 2 conferences',desc:'Restarts Jul 16–17 — deliberately scheduled before the WC Final on Jul 19. Playoffs use a custom conference bracket — needs extra work.',flag:'🇺🇸',fixtures:[
+    {label:'Jul 16 — Rivalry Night',games:['CF Montréal vs Toronto FC','Chicago Fire vs Vancouver Whitecaps','St. Louis CITY vs Sporting KC','Seattle Sounders vs Portland Timbers']},
+    {label:'Jul 17 — Rivalry Night',games:['Nashville SC vs Atlanta United','LA Galaxy vs LAFC']},
+  ]},
+  {id:'sudamericana',month:'July',name:'Copa Sudamericana 2026',type:'ok',meta:'Jul 21 playoffs · R16 from Aug 11 · Knockout',desc:'Jul 21–30: playoff round (Libertadores 3rd vs Sudamericana 2nd). R16 first legs Aug 11–13, second legs Aug 18–20.',flag:'🏆',fixtures:[
+    {label:'Jul 21–23 — Playoffs (ida)',games:['Boca Juniors vs O\'Higgins','Bolívar vs Grêmio','Sporting Cristal vs Bragantino','Independiente Medellín vs Vasco da Gama','Nacional (URU) vs Tigre','Santa Fe vs Caracas FC','Lanús vs Cienciano','Universidad Central vs Santos']},
+    {label:'Jul 28–30 — Playoffs (vuelta)',games:['O\'Higgins vs Boca Juniors','Grêmio vs Bolívar','Bragantino vs Sporting Cristal','Vasco da Gama vs Ind. Medellín','Tigre vs Nacional (URU)','Caracas FC vs Santa Fe','Cienciano vs Lanús','Santos vs Universidad Central']},
+    {label:'Aug 11–13 — R16 (ida)',games:['Fixtures TBD — dependen de playoffs']},
+  ]},
+  {id:'brasileirao',month:'July',name:'Brasileirão Serie A 2026',type:'ok',meta:'Resumes Jul 22 · Single table · 20 teams',desc:'Paused since May for the World Cup. Returns Jul 22 (round 19). Full season ends Dec 2. Groups view works as-is.',flag:'🇧🇷',fixtures:[
+    {label:'Jul 22–23 — Rodada 19',games:['São Paulo vs Athletico-PR','Corinthians vs Remo (Jul 27)','Fixtures completos no publicados aún — ver cbf.com.br']},
+    {label:'Jul 29–30 — Rodada 20',games:['Fixtures no publicados aún']},
+  ]},
+  {id:'argentina',month:'July',name:'Liga Profesional Argentina — Clausura',type:'ok',meta:'Jul 23 · Single table · 28 teams',desc:'Confirmed start Jul 23. River debuts Jul 25, Boca on Jul 27. One big table, no knockout. Groups view works as-is.',flag:'🇦🇷',fixtures:[
+    {label:'Jul 23 — Fecha 1',games:['Belgrano vs Rosario Central (19:30)','Sarmiento vs Argentinos Juniors (19:30)','Defensa y Justicia vs Aldosivi (21:45)']},
+    {label:'Jul 24–26 — Fecha 1 (cont.)',games:['Atlético Tucumán vs Independiente Rivadavia (Jul 26, 15:00)','Estudiantes vs Independiente (Jul 26, 17:15)','Deportivo Riestra vs Boca Juniors (Jul 26, 19:30)']},
+    {label:'Jul 30 — Fecha 2',games:['Fixtures no publicados aún']},
+  ]},
+  {id:'betplay',month:'July',name:'Liga BetPlay Colombia — Clausura',type:'ok',meta:'Jul 24 → Nov · 2 groups of 10',desc:'Opens Jul 24. Two groups of 10, then cuadrangulares (2 groups of 4), then a two-legged final. All phases fit the current app.',flag:'🇨🇴',fixtures:[
+    {label:'Jul 24 — Fecha 1',games:['Llaneros vs Deportivo Pereira (18:10)','Deportivo Cali vs Jaguares','Deportes Tolima vs Junior de Barranquilla','Millonarios vs Atlético Bucaramanga','Boyacá Chicó vs Atlético Nacional','Deportivo Pasto vs Ind. Medellín']},
+    {label:'Jul 31 — Fecha 2',games:['Fixtures no publicados aún']},
+  ]},
+  {id:'libertadores',month:'August',name:'Copa Libertadores 2026',type:'ok',meta:'Aug 11 — Round of 16 · Knockout only',desc:'Biggest club tournament in LATAM. R16 first legs Aug 11–13, second legs Aug 18–20. Bracket view works perfectly.',flag:'🏆',fixtures:[
+    {label:'Aug 11–13 — Octavos (ida)',games:['LDU Quito vs Mirassol','Rosario Central vs Corinthians','Otros 6 cruces — fixture completo no publicado aún']},
+    {label:'Aug 18–20 — Octavos (vuelta)',games:['Fixtures TBD']},
+  ]},
+  {id:'laliga',month:'August',name:'La Liga 2026–27',type:'ok',meta:'Aug 15–16 · Single table · 20 teams',desc:'Huge LATAM audience (Mbappé, Vinicius, etc.). Standard single table — no changes needed.',flag:'🇪🇸',fixtures:[
+    {label:'Aug 15–16 — Jornada 1',games:['Real Madrid vs Real Sociedad','Barcelona vs Athletic Club','Atlético Madrid vs Málaga','Otros 7 partidos — fixture completo no publicado aún']},
+    {label:'Aug 22–23 — Jornada 2',games:['Fixtures no publicados aún']},
+  ]},
+  {id:'premier',month:'August',name:'Premier League 2026–27',type:'ok',meta:'Aug 21 · Single table · 20 teams',desc:'Starts one week later than usual — post-World Cup recovery. No changes needed.',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',fixtures:[
+    {label:'Aug 21 — GW1',games:['Fixtures no publicados aún']},
+    {label:'Aug 28–29 — GW2',games:['Fixtures no publicados aún']},
+  ]},
+  {id:'seriea',month:'August',name:'Serie A 2026–27',type:'ok',meta:'Aug 22–23 · Single table · 20 teams',desc:'Strong LATAM following. Standard table, no changes needed.',flag:'🇮🇹',fixtures:[
+    {label:'Aug 22–23 — Giornata 1',games:['Fixtures no publicados aún']},
+    {label:'Aug 29–31 — Giornata 2',games:['Fixtures no publicados aún']},
+  ]},
+  {id:'ligue1',month:'August',name:'Ligue 1 2026–27',type:'ok',meta:'Aug 23 · Single table · 18 teams',desc:'Lower LATAM interest but worth including. Standard table.',flag:'🇫🇷',fixtures:[
+    {label:'Aug 23 — Journée 1',games:['Fixtures no publicados aún']},
+    {label:'Aug 30–31 — Journée 2',games:['Fixtures no publicados aún']},
+  ]},
+  {id:'bundesliga',month:'August',name:'Bundesliga 2026–27',type:'ok',meta:'Aug 28 · Single table · 18 teams',desc:'Strong LATAM following (many top players). Standard single table — no changes needed.',flag:'🇩🇪',fixtures:[
+    {label:'Aug 28 — Spieltag 1',games:['Fixtures no publicados aún']},
+    {label:'Sep 11–13 — Spieltag 2',games:['Fixtures no publicados aún']},
+  ]},
+  {id:'ucl',month:'September',name:'UEFA Champions League 2026–27',type:'warn',meta:'Sep 8 — league phase · 36-team table + knockout',desc:'New format: 36 clubs in one big table (8 games each), then R16 knockout. Needs adjustments for 36 teams.',flag:'🏆',fixtures:[
+    {label:'Sep 8 — MD1 (League Phase)',games:['Fixtures no publicados aún']},
+    {label:'Sep 16 — MD2',games:['Fixtures no publicados aún']},
+  ]},
 ];
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -175,11 +222,11 @@ async function binPut(data){
 
 /* ── REVIEWER ─────────────────────────────────── */
 function renderReviewer(){
-  const LKEY = 'tr-local-v2';
+  const LKEY = 'tr-local-v3';
   let localState = (() => {
     try { const s=localStorage.getItem(LKEY); if(s) return JSON.parse(s); } catch(e){}
-    const s={tournaments:JSON.parse(JSON.stringify(defaultTournaments)),comments:{},openForms:{}};
-    defaultTournaments.forEach(t=>{s.comments[t.id]=[];s.openForms[t.id]=false;});
+    const s={tournaments:JSON.parse(JSON.stringify(defaultTournaments)),comments:{},openForms:{},openFixtures:{}};
+    defaultTournaments.forEach(t=>{s.comments[t.id]=[];s.openForms[t.id]=false;s.openFixtures[t.id]=false;});
     return s;
   })();
   function saveLocal(){ try{localStorage.setItem(LKEY,JSON.stringify(localState));}catch(e){} }
@@ -240,15 +287,30 @@ function renderReviewer(){
       const formHtml=localState.openForms[t.id]
         ?`<div class="comment-form"><textarea id="ta-${t.id}" placeholder="Your comment..."></textarea><button class="submit-comment" data-id="${t.id}">Add comment</button></div>`
         :`<button class="toggle-btn" data-toggle="${t.id}"><i class="ti ti-message-circle"></i> Add comment</button>`;
+      let fixturesHtml='';
+      if(t.fixtures&&t.fixtures.length){
+        const fxOpen=localState.openFixtures&&localState.openFixtures[t.id];
+        const rounds=t.fixtures.map(r=>`<div class="fx-round">${esc(r.label)}</div>${r.games.map(g=>`<div class="fx-game">${esc(g)}</div>`).join('')}`).join('');
+        fixturesHtml=`<button class="fixtures-toggle${fxOpen?' open':''}" data-fx="${t.id}"><i class="ti ti-calendar-event"></i> Ver fixtures <span class="fx-arrow">▾</span></button><div class="fixtures-body${fxOpen?' open':''}" id="fx-${t.id}">${rounds}</div>`;
+      }
       html+=`<div class="card${t.userAdded?' user-added':''}">
         <div class="card-header"><div class="card-name-row">${iconHtml}<span class="card-name">${esc(t.name)}</span></div><span class="badge ${badgeCls}">${badgeLabel}</span></div>
         <div class="card-meta">${esc(t.meta)}</div>
         <div class="card-desc">${esc(t.desc)}</div>
+        ${fixturesHtml}
         <div class="comments-list">${commentsHtml}</div>
         ${formHtml}
       </div>`;
     });
     container.innerHTML=html;
+    container.querySelectorAll('[data-fx]').forEach(btn=>{
+      btn.onclick=()=>{
+        if(!localState.openFixtures)localState.openFixtures={};
+        const id=btn.dataset.fx;
+        localState.openFixtures[id]=!localState.openFixtures[id];
+        saveLocal(); renderList();
+      };
+    });
     container.querySelectorAll('[data-toggle]').forEach(btn=>{
       btn.onclick=()=>{ localState.openForms[btn.dataset.toggle]=true; saveLocal(); renderList(); setTimeout(()=>{const el=document.getElementById('ta-'+btn.dataset.toggle);if(el)el.focus();},50); };
     });
